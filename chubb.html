@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>安達產競賽獎勵地圖</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    html, body, #map {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    .my-div-icon {
+      background-color: #f5a623;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 60px;
+      width: 70px;
+      height: 70px;
+      line-height: 70px;
+      text-align: center;
+      border: 3px solid #fff;
+      box-shadow: 0 0 15px rgba(0,0,0,0.8);
+      font-weight: bold;
+    }
+    .my-div-icon span {
+      color: #00ffff;
+    }
+    .trophy-icon {
+      font-size: 64px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([24.85, 121.6], 9);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const itinerary = [
+      {
+        title: "來回北車天成",
+        coords: [24.68214503429983, 121.77604450465122],
+        note: "📅 4月12日（星期六）行程<br>08:30 北車天成門口集合上車<br><br>📅 4月13日（星期日）行程<br>13:40 賦歸回北車天成",
+        label: "0"
+      },
+      {
+        title: "中興文創園區",
+        coords: [24.678683, 121.772835],
+        note: "📅 4月12日（星期六）行程<br>08:30 北車天成門口集合上車<br>10:30 抵達中興文創園區<br>10:40 分組活動",
+        label: "1"
+      },
+      {
+        title: "午餐",
+        coords: [24.681221, 121.766688],
+        note: "📅 4月12日（星期六）行程<br>11:50 羅東祥瑞滬小月餐廳",
+        label: "2"
+      },
+      {
+        title: "精彩主題",
+        coords: [24.677111, 121.765833],
+        note: "📅 4月12日（星期六）行程<br>13:40 前往村卻國際溫泉酒店<br>14:00 Team Building <br>16:00 發放房卡、星空酒吧說明、進房檢查<br>16:15 自由活動<br>17:45 餐廳集合 + 大合照<br>18:00 晚宴暨頒獎活動（歡唱卡啦OK）<br>21:10 房間泡湯或看夜景<br><br>📅 4月13日（星期日）行程<br>06:30 飯店自助早餐<br>07:05 自由活動 - 使用飯店設施<br>10:55 退房",
+        label: "3"
+      },
+      {
+        title: "午餐、賦歸",
+        coords: [24.68432, 121.768802],
+        note: "📅 4月13日（星期日）行程<br>11:30 午餐 - 羅東晶園會館<br>13:40 賦歸回北車天成",
+        label: "4"
+      },
+      {
+        title: "來回北車天成",
+        coords: [24.68214503429983, 121.77604450465122],
+        note: "📅 4月12日（星期六）行程<br>08:30 北車天成門口集合上車<br><br>📅 4月13日（星期日）行程<br>13:40 賦歸回北車天成",
+        label: "0"
+      },
+    ];
+
+    const polylinePoints = itinerary.map(item => item.coords);
+
+    itinerary.forEach((item) => {
+      const popupContent = `<div><strong>${item.label}. ${item.title}</strong><br>${item.note}</div>`;
+      L.marker(item.coords, {
+        icon: L.divIcon({
+          className: 'my-div-icon',
+          html: `<span>${item.label}</span><div style='font-size:12px;'>${item.title}</div>`
+        })
+      }).addTo(map).bindPopup(popupContent);
+    });
+
+    const polyline = L.polyline(polylinePoints, { color: 'red' }).addTo(map);
+    map.fitBounds(polyline.getBounds(), { padding: [30, 30] });
+
+    const trophyIcon = L.divIcon({
+      html: '<div class="trophy-icon">🏆</div>',
+      className: '',
+      iconSize: [64, 64],
+      iconAnchor: [32, 32]
+    });
+
+    let trophyMarker = L.marker(polylinePoints[0], { icon: trophyIcon }).addTo(map);
+
+    let index = 0;
+    function animateTrophy() {
+      const nextIndex = (index + 1) % polylinePoints.length;
+      const current = polylinePoints[index];
+      const next = polylinePoints[nextIndex];
+      let steps = 100;
+      let step = 0;
+      const latDelta = (next[0] - current[0]) / steps;
+      const lngDelta = (next[1] - current[1]) / steps;
+
+      const move = () => {
+        if (step < steps) {
+          let lat = current[0] + latDelta * step;
+          let lng = current[1] + lngDelta * step;
+          trophyMarker.setLatLng([lat, lng]);
+          step++;
+          requestAnimationFrame(move);
+        } else {
+          index = nextIndex;
+          setTimeout(animateTrophy, 500);
+        }
+      };
+      move();
+    }
+
+    animateTrophy();
+  </script>
+</body>
+</html>
