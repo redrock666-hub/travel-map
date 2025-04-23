@@ -39,65 +39,50 @@
   <div id="map"></div>
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script>
+    // 初始化地圖並設定初始視野位置與縮放層級
     const map = L.map('map').setView([24.85, 121.6], 9);
+
+    // 載入 OpenStreetMap 圖磚圖層
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
+    // 定義行程地點與說明
     const itinerary = [
-      {
-        title: "來回北車天成",
-        coords: [24.68214503429983, 121.77604450465122],
-        note: "📅 4月12日（星期六）行程<br>08:30 北車天成門口集合上車<br><br>📅 4月13日（星期日）行程<br>16:00 抵達北車天成",
-        label: "0"
-      },
-      {
-        title: "中興文創園區",
-        coords: [24.678683, 121.772835],
-        note: "📅 4月12日（星期六）行程<br>10:30 抵達中興文創園區<br>10:40 ~ 11:30 分組活動",
-        label: "1"
-      },
-      {
-        title: "午餐",
-        coords: [24.681221, 121.766688],
-        note: "📅 4月12日（星期六）行程<br>11:50 ~ 13:30 羅東祥瑞滬小月餐廳",
-        label: "2"
-      },
-      {
-        title: "精彩主題",
-        coords: [24.677111, 121.765833],
-        note: "📅 4月12日（星期六）行程<br>13:40 ~ 13:50 前往村卻國際溫泉酒店<br>14:00 ~ 16:00 Team Building <br>16:00 ~ 16:15 發放房卡、星空酒吧說明、進房檢查<br>16:15 ~ 17:45 自由活動<br>17:45 ~ 17:50 餐廳集合 + 大合照<br>18:00 ~ 21:00 晚宴暨頒獎活動（歡唱卡啦OK）<br>21:10 ~ 房間泡湯或看夜景<br><br>📅 4月13日（星期日）行程<br>06:30 ~ 10:30 飯店自助早餐<br>07:05 ~ 10:50 自由活動 - 使用飯店設施<br>10:55 ~ 11:00 退房",
-        label: "3"
-      },
-      {
-        title: "午餐、賦歸",
-        coords: [24.68432, 121.768802],
-        note: "📅 4月13日（星期日）行程<br>11:30 ~ 13:30 午餐 - 羅東晶園會館<br>13:40 賦歸回北車天成",
-        label: "4"
-      },
-      {
-        title: "來回北車天成",
-        coords: [24.68214503429983, 121.77604450465122],
-        note: "📅 4月12日（星期六）行程<br>08:30 北車天成門口集合上車<br><br>📅 4月13日（星期日）行程<br>16:00 抵達北車天成",
-        label: "0"
-      },
+      { title: "來回北車天成", coords: [24.68214503429983, 121.77604450465122], note: "📅 4月12日（星期六）行程...", label: "0" },
+      { title: "中興文創園區", coords: [24.678683, 121.772835], note: "📅 4月12日（星期六）行程...", label: "1" },
+      { title: "午餐", coords: [24.681221, 121.766688], note: "📅 4月12日（星期六）行程...", label: "2" },
+      { title: "精彩主題", coords: [24.677111, 121.765833], note: "📅 4月12日（星期六）行程...", label: "3" },
+      { title: "午餐、賦歸", coords: [24.68432, 121.768802], note: "📅 4月13日（星期日）行程...", label: "4" },
+      { title: "來回北車天成", coords: [24.68214503429983, 121.77604450465122], note: "📅 4月12日（星期六）行程...", label: "0" },
     ];
 
+    // 擷取所有地點座標
     const polylinePoints = itinerary.map(item => item.coords);
 
+    // 繪製每個行程點位標記與彈跳資訊
     itinerary.forEach((item) => {
-      const popupContent = `<div><strong>${item.label}. ${item.title}</strong><br>${item.note}</div>`;
+      const popupContent = `<div><strong style='font-size:20px;'>${item.label}. ${item.title}</strong><br>${item.note}</div>`;
       L.marker(item.coords, {
         icon: L.divIcon({
           className: 'my-div-icon',
-          html: `<span>${item.label}</span><div style='font-size:12px;'>${item.title}</div>`
+          html: `<span>${item.label}</span>`
         })
       }).addTo(map).bindPopup(popupContent);
     });
 
+    // 顯示一個紅字「0 視為北車」提示框在起點附近
+    const beicheLabelIcon = L.divIcon({
+      className: '',
+      html: `<div style="font-size:18px;color:red;font-weight:bold;white-space:nowrap;">0視為北車</div>`
+    });
+    L.marker([24.6824, 121.7763], { icon: beicheLabelIcon, interactive: false }).addTo(map);
+
+    // 繪製紅線路徑連接所有地點
     const polyline = L.polyline(polylinePoints, { color: 'red' }).addTo(map);
     map.fitBounds(polyline.getBounds(), { padding: [30, 30] });
 
+    // 建立獎盃圖示
     const trophyIcon = L.divIcon({
       html: '<div class="trophy-icon">🏆</div>',
       className: '',
@@ -105,8 +90,10 @@
       iconAnchor: [32, 32]
     });
 
+    // 在起點放置獎盃圖示
     let trophyMarker = L.marker(polylinePoints[0], { icon: trophyIcon }).addTo(map);
 
+    // 控制獎盃沿路移動的邏輯
     let index = 0;
     function animateTrophy() {
       const nextIndex = (index + 1) % polylinePoints.length;
@@ -117,6 +104,7 @@
       const latDelta = (next[0] - current[0]) / steps;
       const lngDelta = (next[1] - current[1]) / steps;
 
+      // 執行動畫逐步移動獎盃
       const move = () => {
         if (step < steps) {
           let lat = current[0] + latDelta * step;
@@ -132,7 +120,9 @@
       move();
     }
 
+    // 啟動獎盃動畫
     animateTrophy();
   </script>
 </body>
 </html>
+
