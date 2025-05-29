@@ -236,11 +236,8 @@
             { dayKey: "Day 5", dayDisplay: "D5", coords: [16.047176, 108.220978], title: "峴港國際機場 (DAD) - 返程", description: "14:30 出發前往機場，17:35 班機起飛。" }
         ];
 
-        const locations = [
-            locations_data[1], 
-            locations_data[0], 
-            ...locations_data.slice(2)
-        ].map((loc, index) => ({ ...loc, label: (index + 1).toString() }));
+        // Ensure locations are mapped directly from locations_data for correct labeling order
+        const locations = locations_data.map((loc, index) => ({ ...loc, label: (index + 1).toString() }));
 
 
         function getMarkerBgClass(dayKey) {
@@ -264,14 +261,23 @@
             markers[loc.label] = marker; 
         });
         
+        // Paths are defined using the indices of the 'locations' array, which now reflects the correct order
         const paths_to_draw = [
-            { name: "Day 1", coordinates: [ locations[1].coords, locations[0].coords, locations[2].coords, locations[3].coords ] },
+            // Day 1: Airport (locations[0]) -> Four Seasons (locations[1]) -> Hoi An Ancient Town (locations[2]) -> Moire Hotel (locations[3])
+            { name: "Day 1", coordinates: [ locations[0].coords, locations[1].coords, locations[2].coords, locations[3].coords ] },
+            // Day 1 Evening: Moire Hotel (locations[3]) -> Hoi An Ancient Town (locations[2]) -> Home Hoi An (locations[4])
             { name: "Day 1 Evening", coordinates: [ locations[3].coords, locations[2].coords, locations[4].coords ] },
+            // Day 2: Moire Hotel (locations[3]) -> Rêu Restaurant (locations[5]) -> SPA (locations[6]) -> Moire Hotel (locations[3]) -> Italian Restaurant (locations[7])
             { name: "Day 2", coordinates: [ locations[3].coords, locations[5].coords, locations[6].coords, locations[3].coords, locations[7].coords ] },
+            // Day 3: Moire Hotel (locations[3]) -> Coconut Village (locations[8]) -> Seafood Lunch (locations[9]) -> Marble Mt. (locations[10]) -> InterContinental (locations[11])
             { name: "Day 3", coordinates: [ locations[3].coords, locations[8].coords, locations[9].coords, locations[10].coords, locations[11].coords ] },
+            // Day 3 Evening: InterContinental (locations[11]) -> Dinner Outside (locations[12])
             { name: "Day 3 Evening", coordinates: [ locations[11].coords, locations[12].coords ] },
+            // Day 4 - Main: InterContinental (locations[11]) -> Ba Na Hills (locations[13])
             { name: "Day 4 - Main", coordinates: [ locations[11].coords, locations[13].coords ] },
+            // Day 4 - EXE: InterContinental (locations[11]) -> Hue Imperial City (locations[14])
             { name: "Day 4 - EXE", coordinates: [ locations[11].coords, locations[14].coords ], dashed: true },
+            // Day 5: InterContinental (locations[11]) -> DAD Airport (Return) (locations[15])
             { name: "Day 5", coordinates: [ locations[11].coords, locations[15].coords ] }
         ];
 
