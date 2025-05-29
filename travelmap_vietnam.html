@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>越南會安&峴港 - 旅遊地圖</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff; /* Light Alice Blue background */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #map {
+            width: 95%;
+            max-width: 1200px;
+            height: 70vh;
+            margin-top: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 1px solid #ccc;
+        }
+        .map-title {
+            font-size: 2em;
+            color: #2c3e50;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .legend {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            margin-bottom: 20px;
+            width: 90%;
+            max-width: 600px;
+        }
+        .legend h3 {
+            margin-top: 0;
+            font-size: 1.2em;
+            color: #34495e;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .legend-color { /* Used for colored circles in legend */
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+        }
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+        }
+        .leaflet-popup-content {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .leaflet-popup-content h4 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            color: #2980b9;
+        }
+        .leaflet-popup-content p {
+            margin-bottom: 3px;
+        }
+
+        /* Styles for numbered markers on the map */
+        .numbered-div-icon {
+            border-radius: 50%;
+            color: #003366; 
+            font-size: 20px; 
+            font-weight: 700; 
+            width: 36px;  
+            height: 36px; 
+            line-height: 36px; 
+            text-align: center;
+            border: 2px solid white; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5); 
+        }
+        /* Background colors for numbered markers */
+        .marker-bg-day1 { background-color: #FF5733; }
+        .marker-bg-day2 { background-color: #33FF57; }
+        .marker-bg-day3 { background-color: #3357FF; }
+        .marker-bg-day4 { background-color: #FF33A1; } 
+        .marker-bg-day5 { background-color: #F1C40F; }
+        .marker-bg-default { background-color: #8E44AD; }
+
+        /* Styles for custom location buttons control - 8x2 Grid Layout (Desktop) */
+        .custom-location-controls {
+            display: grid; 
+            grid-template-columns: repeat(8, auto); /* 8 columns */
+            gap: 4px; /* Spacing between buttons */
+            background-color: rgba(255, 255, 255, 0.9); 
+            padding: 6px; 
+            border-radius: 5px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+            margin-top: 10px; /* Position from top edge of map container */
+            width: fit-content; 
+        }
+        .custom-location-button {
+            background-color: white;
+            border: 1px solid #ccc;
+            color: #003366; 
+            padding: 0; 
+            border-radius: 4px;
+            cursor: pointer;
+            width: 30px; /* Adjusted width for 8-column layout */
+            height: 30px; /* Adjusted height */
+            line-height: 30px; 
+            text-align: center;
+            font-size: 10px; /* Adjusted font size for smaller buttons */
+            font-weight: bold;
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+        }
+        .custom-location-button:hover {
+            background-color: #f0f0f0;
+        }
+
+
+        @media (max-width: 768px) {
+            .map-title {
+                font-size: 1.5em;
+            }
+            #map {
+                height: 60vh;
+            }
+            .legend {
+                width: 90%;
+            }
+            /* Map marker icons for mobile */
+            .numbered-div-icon {
+                width: 30px; 
+                height: 30px; 
+                line-height: 30px; 
+                font-size: 14px; 
+            }
+            /* Custom location buttons container for mobile - 8x2, close to screen width */
+            .custom-location-controls {
+                width: 90%; /* Make container close to screen width */
+                margin-left: auto;
+                margin-right: auto; /* Center the container */
+                grid-template-columns: repeat(8, 1fr); /* 8 flexible columns */
+                padding: 5px;
+                gap: 3px;
+            }
+            /* Custom location buttons for mobile */
+            .custom-location-button {
+                width: 100%; /* Button fills the grid cell width */
+                height: 30px; /* Maintain a fixed height */
+                line-height: 30px;
+                font-size: 10px; /* Keep font size readable */
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <h1 class="map-title">越南會安 & 峴港 5天4夜行程地圖 (2025/05/29 - 2025/06/02)</h1>
+
+    <div id="map"></div>
+
+    <div class="legend">
+        <h3>圖例 (路線與標記點背景顏色)</h3>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #FF5733;"></span> D1 - 橘色
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #33FF57;"></span> D2 - 綠色
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #3357FF;"></span> D3 - 藍色
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #FF33A1;"></span> D4 - 粉紅色
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #F1C40F;"></span> D5 - 黃色
+        </div>
+        <p style="margin-top:10px; font-size:0.9em;">標記點上的數字(深藍色)表示行程順序。</p>
+    </div>
+
+    <script>
+        // 初始化地圖，移除預設的縮放控制按鈕
+        const map = L.map('map', { zoomControl: false }).setView([15.99, 108.25], 9); 
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        const dailyColors = {
+            "Day 1": '#FF5733',
+            "Day 1 Evening": '#FF5733',
+            "Day 2": '#33FF57',
+            "Day 3": '#3357FF',
+            "Day 3 Evening": '#3357FF',
+            "Day 4 - Main": '#FF33A1',
+            "Day 4 - EXE": '#FF33A1',
+            "Day 5": '#F1C40F',
+            "Hotel": '#8E44AD' 
+        };
+        
+        const locations_data = [
+            { dayKey: "Day 1", dayDisplay: "D1", coords: [16.047176, 108.220978], title: "峴港國際機場 (DAD)", description: "08:50 抵達，VIP快速通關。" },
+            { dayKey: "Day 1", dayDisplay: "D1", coords: [15.9227, 108.308], title: "Four Seasons Resort Nam Hai", description: "09:30 酒店參觀 & 享用早午餐。" },
+            { dayKey: "Day 1", dayDisplay: "D1", coords: [15.8774, 108.326], title: "會安古城 (世界文化遺產)", description: "13:00-15:30 探索 (日本橋、福建會館、譚祺古宅)。<br>17:30 夜遊 (從酒店出發)。" },
+            { dayKey: "Day 1", dayDisplay: "D1/D2", coords: [15.8800, 108.3300], title: "Moire Hoi An, Vignette Collection by IHG", description: "D1: 15:30 辦理入住。<br>D2: 住宿，早餐於 Bistro Julienne。" },
+            { dayKey: "Day 1", dayDisplay: "D1", coords: [15.8795, 108.3275], title: "Home Hoi An 越式餐廳", description: "19:00 晚餐 (於會安古城區域)。" },
+            { dayKey: "Day 2", dayDisplay: "D2", coords: [15.890, 108.315], title: "在地 Rêu餐廳 & 越式料理烹飪課程", description: "08:15 越南傳統冰咖啡。<br>08:30 料理課程 (含市場探訪、農作/釣魚/按摩)。" },
+            { dayKey: "Day 2", dayDisplay: "D2", coords: [15.881, 108.328], title: "SPA 按摩療程", description: "下午 90分鐘全套按摩。" },
+            { dayKey: "Day 2", dayDisplay: "D2", coords: [15.878, 108.329], title: "義式餐廳晚餐", description: "19:00 晚餐。" },
+            { dayKey: "Day 3", dayDisplay: "D3", coords: [15.903, 108.285], title: "會安椰子村 (Cam Thanh Coconut Village)", description: "10:00 體驗竹籃船遊河。" },
+            { dayKey: "Day 3", dayDisplay: "D3", coords: [15.9035, 108.2855], title: "海鮮風味料理午餐", description: "中午於椰子村附近用餐。" },
+            { dayKey: "Day 3", dayDisplay: "D3", coords: [16.005, 108.264], title: "峴港五行山 (Marble Mountain)", description: "14:00 參觀石灰岩山峰。" },
+            { dayKey: "Day 3", dayDisplay: "D3/D4/D5", coords: [16.1161, 108.2757], title: "InterContinental Danang Sun Peninsula Resort", description: "D3: 15:30 辦理入住。<br>D4 & D5: 住宿，早餐於行政酒廊或Citron餐廳。" },
+            { dayKey: "Day 3", dayDisplay: "D3", coords: [16.110, 108.270], title: "酒店外晚餐 (D3)", description: "18:30 晚餐。" },
+            { dayKey: "Day 4 - Main", dayDisplay: "D4", coords: [15.9958, 107.9892], title: "巴拿山 (Ba Na Hills)", description: "09:00 出發，搭纜車、參觀金橋、花園、靈應寺、法國村、樂園。" },
+            { dayKey: "Day 4 - EXE", dayDisplay: "D4", coords: [16.4673, 107.5785], title: "順化皇城 (EXE 組)", description: "D4 EXE組參觀地點。" },
+            { dayKey: "Day 5", dayDisplay: "D5", coords: [16.047176, 108.220978], title: "峴港國際機場 (DAD) - 返程", description: "14:30 出發前往機場，17:35 班機起飛。" }
+        ];
+
+        const locations = [
+            locations_data[1], 
+            locations_data[0], 
+            ...locations_data.slice(2)
+        ].map((loc, index) => ({ ...loc, label: (index + 1).toString() }));
+
+
+        function getMarkerBgClass(dayKey) {
+            if (dayKey.includes("Day 1")) return 'marker-bg-day1';
+            if (dayKey.includes("Day 2")) return 'marker-bg-day2';
+            if (dayKey.includes("Day 3")) return 'marker-bg-day3';
+            if (dayKey.includes("Day 4")) return 'marker-bg-day4';
+            if (dayKey.includes("Day 5")) return 'marker-bg-day5';
+            return 'marker-bg-default';
+        }
+
+        const markers = {}; 
+
+        locations.forEach(loc => {
+            const markerIcon = L.divIcon({
+                className: `numbered-div-icon ${getMarkerBgClass(loc.dayKey)}`,
+                html: loc.label
+            });
+            const marker = L.marker(loc.coords, { icon: markerIcon }).addTo(map);
+            marker.bindPopup(`<h4>${loc.label}. ${loc.title}</h4><p>(${loc.dayDisplay})<br>${loc.description}</p>`);
+            markers[loc.label] = marker; 
+        });
+        
+        const paths_to_draw = [
+            { name: "Day 1", coordinates: [ locations[1].coords, locations[0].coords, locations[2].coords, locations[3].coords ] },
+            { name: "Day 1 Evening", coordinates: [ locations[3].coords, locations[2].coords, locations[4].coords ] },
+            { name: "Day 2", coordinates: [ locations[3].coords, locations[5].coords, locations[6].coords, locations[3].coords, locations[7].coords ] },
+            { name: "Day 3", coordinates: [ locations[3].coords, locations[8].coords, locations[9].coords, locations[10].coords, locations[11].coords ] },
+            { name: "Day 3 Evening", coordinates: [ locations[11].coords, locations[12].coords ] },
+            { name: "Day 4 - Main", coordinates: [ locations[11].coords, locations[13].coords ] },
+            { name: "Day 4 - EXE", coordinates: [ locations[11].coords, locations[14].coords ], dashed: true },
+            { name: "Day 5", coordinates: [ locations[11].coords, locations[15].coords ] }
+        ];
+
+        paths_to_draw.forEach(path => {
+            const polylineOptions = {
+                color: dailyColors[path.name] || dailyColors["Hotel"],
+                weight: 3
+            };
+            if (path.dashed) {
+                polylineOptions.dashArray = '5, 10';
+            }
+            L.polyline(path.coordinates, polylineOptions).addTo(map);
+        });
+
+        const LocationButtonsControl = L.Control.extend({
+            onAdd: function(map) {
+                const container = L.DomUtil.create('div', 'custom-location-controls');
+                L.DomEvent.disableClickPropagation(container);
+
+                locations.forEach(loc => {
+                    const button = L.DomUtil.create('button', 'custom-location-button', container);
+                    button.innerHTML = loc.label;
+                    button.title = `跳至 ${loc.label}. ${loc.title}`;
+                    L.DomEvent.on(button, 'click', function() {
+                        map.flyTo(loc.coords, 16); 
+                        if (markers[loc.label]) {
+                            markers[loc.label].openPopup();
+                        }
+                    });
+                });
+                return container;
+            },
+            onRemove: function(map) { /* Nothing to do here */ }
+        });
+        new LocationButtonsControl({ position: 'topleft' }).addTo(map); 
+        
+        if (locations.length > 0) {
+            const group = new L.featureGroup(Object.values(markers)); 
+            map.fitBounds(group.getBounds().pad(0.2)); 
+        }
+    </script>
+</body>
+</html>
