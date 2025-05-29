@@ -78,17 +78,17 @@
             margin-bottom: 3px;
         }
 
-        /* Styles for numbered markers */
+        /* Styles for numbered markers on the map */
         .numbered-div-icon {
             border-radius: 50%;
-            color: #003366; /* Number color changed to dark blue */
-            font-size: 20px;  /* Adjusted font size for clarity and fit */
+            color: #003366; 
+            font-size: 20px; 
             font-weight: 700; 
-            width: 36px;  /* Marker width */
-            height: 36px; /* Marker height */
-            line-height: 36px; /* Vertically center number */
+            width: 36px;  
+            height: 36px; 
+            line-height: 36px; 
             text-align: center;
-            border: 2px solid white; /* White border for contrast against colored background */
+            border: 2px solid white; 
             box-shadow: 0 2px 6px rgba(0,0,0,0.5); 
         }
         /* Background colors for numbered markers */
@@ -99,32 +99,32 @@
         .marker-bg-day5 { background-color: #F1C40F; }
         .marker-bg-default { background-color: #8E44AD; }
 
-        /* Styles for custom location buttons control - Grid Layout */
+        /* Styles for custom location buttons control - 8x2 Grid Layout */
         .custom-location-controls {
             display: grid; 
-            grid-template-columns: repeat(4, auto); /* 4 columns */
-            gap: 5px; /* Spacing between buttons */
+            grid-template-columns: repeat(8, auto); /* 8 columns */
+            gap: 4px; /* Spacing between buttons */
             background-color: rgba(255, 255, 255, 0.9); 
-            padding: 8px; /* Increased padding for the container */
+            padding: 6px; 
             border-radius: 5px;
             box-shadow: 0 1px 5px rgba(0,0,0,0.4);
-            margin-top: 10px; 
-            width: fit-content; /* Adjust width to content */
+            margin-top: 10px; /* Position from top edge of map container */
+            width: fit-content; 
         }
         .custom-location-button {
             background-color: white;
             border: 1px solid #ccc;
-            color: #003366; /* Dark blue text for buttons */
+            color: #003366; 
             padding: 0; 
             border-radius: 4px;
             cursor: pointer;
-            width: 35px; /* Fixed width */
-            height: 35px; /* Fixed height to match width */
-            line-height: 35px; /* Center text vertically */
+            width: 30px; /* Adjusted width for 8-column layout */
+            height: 30px; /* Adjusted height */
+            line-height: 30px; 
             text-align: center;
-            font-size: 12px;
+            font-size: 10px; /* Adjusted font size for smaller buttons */
             font-weight: bold;
-            display: flex; /* For centering content if needed */
+            display: flex; 
             align-items: center;
             justify-content: center;
         }
@@ -143,20 +143,25 @@
             .legend {
                 width: 90%;
             }
+            /* Map marker icons for mobile */
             .numbered-div-icon {
                 width: 30px; 
                 height: 30px; 
                 line-height: 30px; 
                 font-size: 14px; 
             }
+            /* Custom location buttons container for mobile - changed to 4x4 for better usability */
             .custom-location-controls {
+                grid-template-columns: repeat(4, auto); /* 4 columns on mobile */
                 padding: 5px;
+                gap: 3px;
             }
+            /* Custom location buttons for mobile */
             .custom-location-button {
-                width: 30px;
+                width: 30px; 
                 height: 30px;
                 line-height: 30px;
-                font-size: 11px;
+                font-size: 10px;
             }
         }
     </style>
@@ -189,8 +194,8 @@
     </div>
 
     <script>
-        // 初始化地圖，設定一個稍微廣一點的初始視野，之後會由 fitBounds 精確聚焦
-        const map = L.map('map').setView([15.99, 108.25], 9); // 初始縮放級別改為 9
+        // 初始化地圖，移除預設的縮放控制按鈕
+        const map = L.map('map', { zoomControl: false }).setView([15.99, 108.25], 9); 
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
@@ -300,11 +305,9 @@
         });
         new LocationButtonsControl({ position: 'topleft' }).addTo(map); 
         
-        // 確保在所有元素都加入地圖後，才執行 fitBounds
-        // 這會自動縮放地圖以包含所有標記點
         if (locations.length > 0) {
             const group = new L.featureGroup(Object.values(markers)); 
-            map.fitBounds(group.getBounds().pad(0.2)); // pad(0.2) 在邊界周圍增加 20% 的邊距
+            map.fitBounds(group.getBounds().pad(0.2)); 
         }
     </script>
 </body>
