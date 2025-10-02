@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>東京涼秋享三湯五日遊地圖</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <!-- Leaflet Mouse Position 插件的 CSS 文件 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-mouse-position/0.4.0/L.Control.MousePosition.css" />
+    <style>
+        /* 設定地圖容器樣式 */
+        #map {
+            height: 100vh;
+            width: 100vw;
+            border: 0px solid transparent;
+            outline: none;
+            position: relative;
+        }
+        /* 自訂彈出視窗樣式 */
+        .custom-popup .leaflet-popup-content-wrapper {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .custom-popup .leaflet-popup-content {
+            margin: 10px;
+        }
+        .custom-popup .leaflet-popup-header {
+            font-size: 1.2em; /* 標題大小 */
+            color: #0078d7;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        /* 突出顯示景點備註，使其文字大小 (15px) 略大於行程內容 */
+        .custom-popup .scene-note-content {
+            font-size: 15px; 
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        /* 當日行程文字 */
+        .custom-popup .itinerary-content {
+            font-size: 14px; 
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap; /* 確保行程內容換行正確，提升手機可讀性 */
+        }
+        
+        /* 調整控制項位置，確保在小螢幕上不會重疊 */
+        .leaflet-control-container .leaflet-top,
+        .leaflet-control-container .leaflet-bottom {
+            z-index: 1000;
+        }
+        .leaflet-control-zoom {
+            margin-top: 10px;
+        }
+        .leaflet-control-scale {
+            margin-bottom: 10px;
+        }
+        /* 確保座標控制項樣式名稱正確 */
+        .leaflet-control-mouseposition {
+            margin-left: 10px;
+        }
+
+        /* 放大圖標，並使用更醒目的顏色 */
+        .my-div-icon {
+            border-radius: 50%;
+            color: #fff;
+            font-size: 60px;
+            width: 70px;
+            height: 70px;
+            line-height: 70px;
+            text-align: center;
+            border: 3px solid #fff;
+            box-shadow: 0 0 15px rgba(0,0,0,0.8);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .my-div-icon:hover {
+            transform: scale(1.4);
+            box-shadow: 0 0 30px rgba(0,0,0,0.9);
+        }
+
+        /* 為數字添加樣式 (淺青色) */
+        .my-div-icon span {
+            color: #00ffff;
+        }
+        
+        /* 針對表情符號（機場）調整字體大小，確保在圓圈內居中 */
+        .my-div-icon .emoji-label {
+            font-size: 35px; 
+            line-height: 70px; /* 確保垂直居中 */
+            text-shadow: none;
+        }
+
+        /* 根據日期設定顏色 */
+        .day-1-icon { background-color: #2e8b57; }
+        .day-2-icon { background-color: #d62828; }
+        .day-3-icon { background-color: #f77f00; }
+        .day-4-icon { background-color: #fcbf49; }
+        .day-5-icon { background-color: #555555; }
+
+        /* 導航按鈕容器和樣式 */
+        .nav-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 20px; /* 增加箭頭間距 */
+            background: rgba(0, 120, 215, 0.9); /* 調整為藍色調背景，更像控制項 */
+            padding: 10px 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-controls button {
+            border: none;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 箭頭按鈕樣式 */
+        .nav-controls .scene-button {
+            background-color: #ffffff; /* 按鈕本身使用白色 */
+            color: #0078d7; /* 文字使用藍色 */
+            width: 50px; /* 增加點擊區域 */
+            height: 50px;
+            padding: 0;
+            line-height: 50px;
+            font-size: 24px; /* 放大箭頭 */
+        }
+
+        .nav-controls .scene-button:hover {
+            background-color: #e6e6e6;
+            color: #005bb5;
+        }
+
+        /* 「全」按鈕樣式 */
+        .nav-controls .all-button {
+            background-color: #ffd700; /* 金黃色 */
+            color: #333; /* 深色文字 */
+            width: 50px; 
+            height: 50px;
+            line-height: 30px; /* 調整行高以居中文字 */
+            font-size: 18px; /* 略微放大文字 */
+        }
+
+        .nav-controls .all-button:hover {
+            background-color: #e5c500;
+            color: #000;
+        }
+
+        .nav-controls button:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <!-- 導航控制項的 HTML 結構：新增「全」按鈕 -->
+    <div class="nav-controls">
+        <button id="prev-scene-button" class="scene-button" title="上一個景點">&#9664;</button>
+        <button id="show-all-button" class="all-button" title="顯示所有景點">全</button>
+        <button id="next-scene-button" class="scene-button" title="下一個景點">&#9654;</button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <!-- Leaflet Mouse Position 插件的 JS 文件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-mouse-position/0.4.0/L.Control.MousePosition.min.js"></script>
+    <script>
+        // 初始化地圖
+        var map = L.map('map').setView([35.6895, 139.6917], 7);
+
+        // 新增OpenStreetMap圖層
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // 完整的行程資訊 (用於彈出視窗中的詳細行程)
+        const fullItineraries = {
+            1: `🗓 第 1 天｜11/12（三） 桃園 ✈ 成田 → 東京湯樂城<br>●早上：集合於桃園機場，專人辦理登機手續<br>●中午：國泰 CX450 (12:50 → 16:50)，機上享用套餐<br>●下午：抵達成田 → 【東京湯樂城】溫泉主題樂園（岩盤浴、街景、聲光秀）<br>●晚上：園區自由覓食（自理） → 入住湯樂城國際渡假酒店`,
+            2: `🗓 第 2 天｜11/13（四） 江之島電車 → 鎌倉高校前 → 箱根神社 → 新倉山淺間公園<br>●早上：飯店早餐 → 湘南海岸【江之島電車體驗】、鎌倉高校前（灌籃高手打卡）<br>●中午：享用日式風味御膳<br>●下午：箱根神社水上鳥居 → 新倉山淺間公園五重塔，欣賞富士山絕景<br>●晚上：入住富士五湖/河口湖溫泉飯店，享百匯自助或迎賓溫泉會席料理`,
+            3: `🗓 第 3 天｜11/14（五） 清里高原 → 萌木之村 → 輕井澤<br>●早上：飯店早餐 → 清里高原 → 清泉寮（贈牛奶冰淇淋、足湯）<br>●中午：享用輕井澤釜飯定食或日式餐<br>●下午：【萌木之村】童話森林 → 輕井澤銀座通 → 聖保羅教堂<br>●晚上：入住輕井澤溫泉飯店，享百匯自助或迎賓溫泉會席料理`,
+            4: `🗓 第 4 天｜11/15（六） 白絲瀑布 → 川越小江戶 → 台場<br>●早上：飯店早餐 → 【白絲瀑布】輕井澤秘境<br>●中午：【川越小江戶】時之鐘、菓子屋橫丁 → 午餐日式套餐<br>●下午：免稅店 → 【台場購物廣場】自由購物<br>●晚上：自由覓食（自理） → 入住東京灣或市區飯店`,
+            5: `🗓 第 5 天｜11/16（日） Outlet → 成田 ✈ 桃園<br>●早上：飯店早餐 → 【MITSUI OUTLET 幕張】或【酒酒井 PREMIUM OUTLETS】購物<br>●中午：自由用餐（自理）<br>●下午：前往成田機場 → 國泰 CX451 (15:20 → 18:40)<br>●晚上：抵達桃園，返回溫暖的家`
+        };
+
+
+        // 日本旅遊行程資料
+        const itinerary = [
+            {
+                title: "抵達東京成田機場（NRT）",
+                coords: [35.764722, 140.386389],
+                note: "辦理登機手續，搭乘國泰 CX450 (12:50 → 16:50)抵達日本。",
+                label: "✈️",
+                day: 1
+            },
+            {
+                title: "東京湯樂城",
+                coords: [35.7925, 140.297],
+                note: "抵達成田後專車前往。溫泉主題樂園（岩盤浴、街景、聲光秀），並入住湯樂城國際渡假酒店。",
+                label: "1",
+                day: 1
+            },
+            {
+                title: "鎌倉高校前",
+                coords: [35.305717, 139.485124],
+                note: "體驗湘南海岸【江之島電車體驗】、鎌倉高校前（灌籃高手打卡）。",
+                label: "2",
+                day: 2
+            },
+            {
+                title: "箱根神社",
+                coords: [35.205739, 139.027061],
+                note: "欣賞箱根神社水上鳥居，探訪歷史古剎。",
+                label: "3",
+                day: 2
+            },
+            {
+                title: "新倉山淺間公園",
+                coords: [35.50348, 138.80211],
+                note: "新倉山淺間公園五重塔，欣賞富士山絕景。晚上入住富士五湖/河口湖溫泉飯店。",
+                label: "4",
+                day: 2
+            },
+            {
+                title: "清里高原與清泉寮",
+                coords: [35.9189, 138.4414],
+                note: "抵達清里高原，前往清泉寮（贈送牛奶冰淇淋、足湯）。",
+                label: "5",
+                day: 3
+            },
+            {
+                title: "萌木之村",
+                coords: [35.908, 138.432],
+                note: "前往【萌木之村】童話森林，享受悠閒時光。",
+                label: "6",
+                day: 3
+            },
+            {
+                title: "輕井澤舊銀座通與聖保羅教堂",
+                coords: [36.3533, 138.6366],
+                note: "逛輕井澤銀座通，並參觀聖保羅教堂。晚上入住輕井澤溫泉飯店。",
+                label: "7",
+                day: 3
+            },
+            {
+                title: "白絲瀑布",
+                coords: [36.3779, 138.5463],
+                note: "探索輕井澤秘境【白絲瀑布】。",
+                label: "8",
+                day: 4
+            },
+            {
+                title: "川越小江戶懷古街道",
+                coords: [35.9242, 139.4828],
+                note: "前往【川越小江戶】懷古街道，參觀時之鐘、菓子屋橫丁。",
+                label: "9",
+                day: 4
+            },
+            {
+                title: "台場購物廣場",
+                coords: [35.6253, 139.7797],
+                note: "下午前往免稅店，之後前往【台場購物廣場】自由購物。晚上入住東京灣或市區飯店。",
+                label: "10",
+                day: 4
+            },
+            {
+                title: "酒酒井PREMIUM OUTLETS",
+                coords: [35.7538, 140.2796],
+                note: "早上在【MITSUI OUTLET 幕張】或【酒酒井 PREMIUM OUTLETS】享受購物樂趣。",
+                label: "11",
+                day: 5
+            },
+            {
+                title: "離開東京成田機場（NRT）",
+                coords: [35.764722, 140.386389],
+                note: "下午前往成田機場，搭乘國泰 CX451 (15:20 → 18:40)返回桃園國際機場。",
+                label: "✈️", 
+                day: 5
+            }
+        ];
+
+        // 建立顏色映射
+        const dayColors = {
+            1: '#2e8b57',
+            2: '#d62828',
+            3: '#f77f00',
+            4: '#fcbf49',
+            5: '#555555',
+        };
+
+        // 全域變數來追蹤當前景點索引和所有景點 Marker
+        let currentItineraryIndex = 0;
+        let markers = []; 
+
+        /**
+         * 處理地圖、標記、彈出視窗的顯示更新
+         * @param {number} index - 要跳轉到的景點索引
+         */
+        function updateSceneDisplay(index) {
+            const total = itinerary.length;
+            // 確保 index 在範圍內，並實現循環 (wrap-around)
+            if (index < 0) index = total - 1;
+            if (index >= total) index = 0;
+
+            currentItineraryIndex = index;
+            
+            if (!markers[currentItineraryIndex]) {
+                 console.error("Marker not found at index:", currentItineraryIndex);
+                 return;
+            }
+
+            const item = itinerary[currentItineraryIndex];
+            const marker = markers[currentItineraryIndex];
+
+            // 1. 移動地圖視野並放大 (Zoom 12)
+            map.flyTo(item.coords, 12, { 
+                animate: true, 
+                duration: 0.8 
+            }); 
+            
+            // 2. 像素偏移 (調整為 -50)，使彈出視窗位置更靠近底部
+            map.panBy([0, -50], { animate: true, duration: 0.8 });
+
+
+            // 3. 關閉所有其他彈出視窗，並開啟新的彈出視窗
+            map.closePopup(); 
+            marker.openPopup();
+        }
+
+        /**
+         * 跳轉到下一個景點
+         */
+        function nextScene() {
+            updateSceneDisplay(currentItineraryIndex + 1);
+        }
+
+        /**
+         * 跳轉到上一個景點
+         */
+        function prevScene() {
+            updateSceneDisplay(currentItineraryIndex - 1);
+        }
+
+        /**
+         * 顯示所有景點
+         */
+        function showAllScenes() {
+            // 關閉任何開啟的彈出視窗
+            map.closePopup(); 
+            // 調整地圖視野以顯示完整路線
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+
+        // 將行程資料新增到地圖上
+        let polylinePoints = [];
+        itinerary.forEach(function(item, index) {
+            
+            // 製作彈出視窗內容
+            var popupContent = `
+            <div class="custom-popup">
+                <h2 class="leaflet-popup-header">第 ${item.day} 天：${item.title}</h2>
+                ${item.note ? `
+                    <p class="scene-note-content"><b>景點備註：</b> ${item.note}</p><hr>` : ''}
+                <p class="itinerary-content"><b>當日完整行程：</b><br>${fullItineraries[item.day]}</p>
+            </div>`;
+            
+            // 根據 label 內容決定是否使用 emoji-label 類別來調整大小
+            const isEmoji = isNaN(item.label);
+            const labelClass = isEmoji ? 'emoji-label' : '';
+
+            const marker = L.marker(item.coords, {
+                icon: L.divIcon({
+                    className: `my-div-icon day-${item.day}-icon`,
+                    html: `<span class="${labelClass}">${item.label}</span>`
+                })
+            }).bindPopup(popupContent).addTo(map);
+
+            // 儲存 marker 參考和座標
+            markers.push(marker);
+            polylinePoints.push({coords: item.coords, day: item.day});
+            
+            // 綁定點擊事件，確保點擊標記也能觸發切換
+            marker.on('click', function() {
+                updateSceneDisplay(index);
+            });
+        });
+
+        // 繪製多色路線
+        let currentDayPoints = [];
+        for (let i = 0; i < polylinePoints.length; i++) {
+            currentDayPoints.push(polylinePoints[i].coords);
+            if (i < polylinePoints.length - 1 && polylinePoints[i].day !== polylinePoints[i+1].day) {
+                L.polyline(currentDayPoints, {
+                    color: dayColors[polylinePoints[i].day],
+                    weight: 5
+                }).addTo(map);
+                currentDayPoints = [polylinePoints[i].coords]; // 從前一個點繼續畫
+            }
+        }
+        L.polyline(currentDayPoints, {
+            color: dayColors[polylinePoints[polylinePoints.length-1].day],
+            weight: 5
+        }).addTo(map);
+
+        // 調整地圖視野以顯示完整路線 (將 bounds 變數設為全域，供「全」按鈕使用)
+        var bounds = L.latLngBounds(polylinePoints.map(p => p.coords));
+        map.fitBounds(bounds, { padding: [50, 50] });
+
+
+        // === 介面控制項創建及事件綁定 (確保 DOM 準備就緒後執行) ===
+
+        window.onload = function() {
+            // 1. 添加標準 Leaflet 控件
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+            L.control.scale({ imperial: false }).addTo(map);
+            
+            // === 座標顯示問題的診斷與修正 (跳過錯誤調用，確保主功能正常) ===
+            console.log("Checking L.control.mousePosition:", typeof L.control.mousePosition);
+            
+            if (typeof L.control.mousePosition === 'function') {
+                // 如果函數存在，則安全地調用它
+                L.control.mousePosition({ position: 'bottomleft', separator: '，', prefix: '座標：' }).addTo(map);
+            } else {
+                // 如果函數不存在，則印出警告，但不報錯，讓應用程式繼續執行
+                console.warn("Leaflet MousePosition plugin failed to initialize. Coordinate display will be skipped.");
+            }
+            
+            // 2. 綁定導航控制項的事件
+            const prevButton = document.getElementById('prev-scene-button');
+            const nextButton = document.getElementById('next-scene-button');
+            const allButton = document.getElementById('show-all-button'); // 新增「全」按鈕的元素
+
+            // 修正：使用 addEventListener 確保事件能正確註冊
+            if (prevButton) {
+                 prevButton.addEventListener('click', prevScene);
+            }
+            if (nextButton) {
+                 nextButton.addEventListener('click', nextScene);
+            }
+            if (allButton) {
+                // 綁定「全」按鈕事件
+                allButton.addEventListener('click', showAllScenes);
+            }
+            
+            // 3. 初始時，將視角移動到第一個景點 (使用 updateSceneDisplay 確保偏移生效)
+            if (markers.length > 0) {
+                 updateSceneDisplay(0);
+            }
+        };
+    </script>
+</body>
+</html>
