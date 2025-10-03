@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>東京涼秋享三湯五日遊地圖</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <!-- Leaflet Mouse Position 插件的 CSS 文件 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-mouse-position/0.4.0/L.Control.MousePosition.css" />
+    <style>
+        /* 設定地圖容器樣式 */
+        #map {
+            height: 100vh;
+            width: 100vw;
+            border: 0px solid transparent;
+            outline: none;
+            position: relative;
+        }
+        /* 自訂彈出視窗樣式 */
+        .custom-popup .leaflet-popup-content-wrapper {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .custom-popup .leaflet-popup-content {
+            margin: 10px;
+        }
+        .custom-popup .leaflet-popup-header {
+            font-size: 1.2em;
+            color: #0078d7;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        .custom-popup .scene-note-content {
+            font-size: 15px; 
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .custom-popup .itinerary-content {
+            font-size: 14px; 
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+        }
+        .leaflet-control-container .leaflet-top,
+        .leaflet-control-container .leaflet-bottom { z-index: 1000; }
+        .leaflet-control-zoom { margin-top: 10px; }
+        .leaflet-control-scale { margin-bottom: 10px; }
+        .leaflet-control-mouseposition { margin-left: 10px; }
+
+        /* 標記樣式 */
+        .my-div-icon {
+            border-radius: 50%;
+            color: #fff;
+            font-size: 60px;
+            width: 70px;
+            height: 70px;
+            line-height: 70px;
+            text-align: center;
+            border: 3px solid #fff;
+            box-shadow: 0 0 15px rgba(0,0,0,0.8);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .my-div-icon:hover { transform: scale(1.4); box-shadow: 0 0 30px rgba(0,0,0,0.9); }
+        .my-div-icon span { color: #00ffff; }
+        .my-div-icon .emoji-label { font-size: 35px; line-height: 70px; text-shadow: none; }
+
+        /* 日別顏色 */
+        .day-1-icon { background-color: #2e8b57; }
+        .day-2-icon { background-color: #d62828; }
+        .day-3-icon { background-color: #f77f00; }
+        .day-4-icon { background-color: #fcbf49; }
+        .day-5-icon { background-color: #555555; }
+
+        /* 導航控制項 */
+        .nav-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 10px; /* 縮小間距以容納新按鈕 */
+            background: rgba(0, 120, 215, 0.9);
+            padding: 10px 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        .nav-controls button {
+            border: none; padding: 10px 15px; border-radius: 10px;
+            font-size: 16px; font-weight: bold; cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            width: 50px; height: 50px; line-height: 50px; padding: 0;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .nav-controls .scene-button {
+            background-color: #fff; color: #0078d7; font-size: 24px;
+        }
+        .nav-controls .scene-button:hover { background-color: #e6e6e6; color: #005bb5; }
+        .nav-controls .all-button {
+            background-color: #ffd700; color: #333; font-size: 18px; line-height: normal; /* 讓文字置中 */
+        }
+        .nav-controls .all-button:hover { background-color: #e5c500; color: #000; }
+        .nav-controls .hotel-button {
+            background-color: #a453ff; color: #fff; font-size: 24px;
+        }
+        .nav-controls .hotel-button:hover { background-color: #8c3bcc; }
+        .nav-controls button:active { transform: scale(0.95); }
+
+        /* 飯店清單模態彈窗 (Modal) 樣式 */
+        .modal {
+            display: none; /* 預設隱藏 */
+            position: fixed; 
+            z-index: 2000; 
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.7); 
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto; /* 垂直置中，上邊距 10% */
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            width: 90%; 
+            max-width: 450px; 
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .modal-content h2 {
+            color: #0078d7; border-bottom: 2px solid #0078d7; padding-bottom: 10px; margin-top: 0;
+        }
+        .modal-content h3 {
+            color: #555; margin-top: 15px; margin-bottom: 5px; font-size: 1.1em;
+            border-left: 4px solid #a453ff; padding-left: 10px;
+        }
+        .close-button {
+            color: #aaa; float: right; font-size: 28px; font-weight: bold;
+            position: absolute; top: 10px; right: 15px;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: #000; text-decoration: none; cursor: pointer;
+        }
+        .hotel-link-button {
+            width: 100%; background-color: #e9f5ff; color: #333; border: 1px solid #ccc;
+            margin-bottom: 8px; text-align: left; padding: 12px 15px; font-size: 16px;
+            border-radius: 8px; transition: background-color 0.2s, border-color 0.2s;
+            box-shadow: none !important;
+        }
+        .hotel-link-button:hover {
+            background-color: #d1e5ff; border-color: #0078d7;
+        }
+
+        /* 針對小螢幕調整模態框 */
+        @media (max-width: 600px) {
+            .modal-content { margin: 5% auto; width: 95%; }
+            .nav-controls button { width: 45px; height: 45px; font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <!-- 導航控制項 -->
+    <div class="nav-controls">
+        <button id="prev-scene-button" class="scene-button" title="上一個景點">&#9664;</button>
+        <button id="show-all-button" class="all-button" title="顯示所有景點">全</button>
+        <!-- 新增飯店清單按鈕 -->
+        <button id="hotel-list-button" class="hotel-button" title="飯店清單及周邊搜尋">&#127976;</button>
+        <button id="next-scene-button" class="scene-button" title="下一個景點">&#9654;</button>
+    </div>
+
+    <!-- 飯店清單模態彈窗 -->
+    <div id="hotel-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeHotelListModal()">&times;</span>
+            <h2>🏨 行程住宿點清單</h2>
+            <div id="hotel-list-content">
+                <!-- 飯店清單將由 JavaScript 動態生成 -->
+            </div>
+            <p style="font-size: 14px; color: #888; margin-top: 20px; text-align: center;">點擊飯店名稱，將在新分頁搜尋其附近之超市及美食。</p>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <!-- Leaflet Mouse Position 插件的 JS 文件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-mouse-position/0.4.0/L.Control.MousePosition.min.js"></script>
+    <script>
+        // 初始化地圖
+        var map = L.map('map').setView([35.6895, 139.6917], 7);
+
+        // === 可調整：底部安全距離（像素） ===
+        const BOTTOM_SAFE_MARGIN = 200;
+
+        // 圖磚 (使用 OpenStreetMap 作為底圖)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // 完整的行程資訊 (保持不變)
+        const fullItineraries = {
+            1: `🗓 第 1 天｜11/12（三） 桃園 ✈ 成田 → 東京湯樂城<br>●早上：集合於桃園機場，專人辦理登機手續<br>●中午：國泰 CX450 (12:50 → 16:50)，機上享用套餐<br>●下午：抵達成田 → 【東京湯樂城】溫泉主題樂園（岩盤浴、街景、聲光秀）<br>●晚上：園區自由覓食（自理） → 入住湯樂城國際渡假酒店`,
+            2: `🗓 第 2 天｜11/13（四） 江之島電車 → 鎌倉高校前 → 箱根神社 → 新倉山淺間公園<br>●早上：飯店早餐 → 湘南海岸【江之島電車體驗】、鎌倉高校前（灌籃高手打卡）<br>●中午：享用日式風味御膳<br>●下午：箱根神社水上鳥居 → 新倉山淺間公園五重塔，欣賞富士山絕景<br>●晚上：入住富士五湖/河口湖溫泉飯店，享百匯自助或迎賓溫泉會席料理`,
+            3: `🗓 第 3 天｜11/14（五） 清里高原 → 萌木之村 → 輕井澤<br>●早上：飯店早餐 → 清里高原 → 清泉寮（贈牛奶冰淇淋、足湯）<br>●中午：享用輕井澤釜飯定食或日式餐<br>●下午：【萌木之村】童話森林 → 輕井澤銀座通 → 聖保羅教堂<br>●晚上：入住輕井澤溫泉飯店，享百匯自助或迎賓溫泉會席料理`,
+            4: `🗓 第 4 天｜11/15（六） 白絲瀑布 → 川越小江戶 → 台場<br>●早上：飯店早餐 → 【白絲瀑布】輕井澤秘境<br>●中午：【川越小江戶】時之鐘、菓子屋橫丁 → 午餐日式套餐<br>●下午：免稅店 → 【台場購物廣場】自由購物<br>●晚上：自由覓食（自理） → 入住東京灣或市區飯店`,
+            5: `🗓 第 5 天｜11/16（日） Outlet → 成田 ✈ 桃園<br>●早上：飯店早餐 → 【MITSUI OUTLET 幕張】或【酒酒井 PREMIUM OUTLETS】購物<br>●中午：自由用餐（自理）<br>●下午：前往成田機場 → 國泰 CX451 (15:20 → 18:40)<br>●晚上：抵達桃園，返回溫暖的家`
+        };
+
+        // 行程資料 (保持不變)
+        const itinerary = [
+            { title: "抵達東京成田機場（NRT）", coords: [35.764722, 140.386389], note: "辦理登機手續，搭乘國泰 CX450 (12:50 → 16:50)抵達日本。", label: "✈️", day: 1 },
+            { title: "東京湯樂城", coords: [35.7925, 140.297], note: "抵達成田後專車前往。溫泉主題樂園（岩盤浴、街景、聲光秀），並入住湯樂城國際渡假酒店。", label: "1", day: 1 },
+            { title: "鎌倉高校前", coords: [35.305717, 139.485124], note: "體驗湘南海岸【江之島電車體驗】、鎌倉高校前（灌籃高手打卡）。", label: "2", day: 2 },
+            { title: "箱根神社", coords: [35.205739, 139.027061], note: "欣賞箱根神社水上鳥居，探訪歷史古剎。", label: "3", day: 2 },
+            { title: "新倉山淺間公園", coords: [35.50348, 138.80211], note: "新倉山淺間公園五重塔，欣賞富士山絕景。晚上入住富士五湖/河口湖溫泉飯店。", label: "4", day: 2 },
+            { title: "清里高原與清泉寮", coords: [35.9189, 138.4414], note: "抵達清里高原，前往清泉寮（贈送牛奶冰淇淋、足湯）。", label: "5", day: 3 },
+            { title: "萌木之村", coords: [35.908, 138.432], note: "前往【萌木之村】童話森林，享受悠閒時光。", label: "6", day: 3 },
+            { title: "輕井澤舊銀座通與聖保羅教堂", coords: [36.3533, 138.6366], note: "逛輕井澤銀座通，並參觀聖保羅教堂。晚上入住輕井澤溫泉飯店。", label: "7", day: 3 },
+            { title: "白絲瀑布", coords: [36.3779, 138.5463], note: "探索輕井澤秘境【白絲瀑布】。", label: "8", day: 4 },
+            { title: "川越小江戶懷古街道", coords: [35.9242, 139.4828], note: "前往【川越小江戶】懷古街道，參觀時之鐘、菓子屋橫丁。", label: "9", day: 4 },
+            { title: "台場購物廣場", coords: [35.6253, 139.7797], note: "下午前往免稅店，之後前往【台場購物廣場】自由購物。晚上入住東京灣或市區飯店。", label: "10", day: 4 },
+            { title: "酒酒井PREMIUM OUTLETS", coords: [35.7538, 140.2796], note: "早上在【MITSUI OUTLET 幕張】或【酒酒井 PREMIUM OUTLETS】享受購物樂趣。", label: "11", day: 5 },
+            { title: "離開東京成田機場（NRT）", coords: [35.764722, 140.386389], note: "下午前往成田機場，搭乘國泰 CX451 (15:20 → 18:40)返回桃園國際機場。", label: "✈️", day: 5 }
+        ];
+
+        // 新增飯店清單資料
+        const hotelData = [
+            { day: 1, name: "湯樂城國際渡假酒店" },
+            { day: 2, name: "富士美華" },
+            { day: 2, name: "富士河口湖RESORT" },
+            { day: 2, name: "春日居VIEW" },
+            { day: 2, name: "富士松園" },
+            { day: 3, name: "輕井澤GREEN PLAZA" },
+            { day: 3, name: "輕井澤1130" },
+            { day: 3, name: "輕井澤總統" },
+            { day: 3, name: "北輕井澤Golden Forest" },
+            { day: 3, name: "輕井澤王子小木屋" },
+            { day: 4, name: "東京灣幕張APA" },
+            { day: 4, name: "LAGENT東京灣" },
+            { day: 4, name: "MONday Premium豊洲" },
+            { day: 4, name: "上野光芒酒店" },
+            { day: 4, name: "Springs Makuhari 幕張春天" },
+            { day: 4, name: "Tmark City Hotel 東京大森" },
+            { day: 4, name: "CVS BAY HOTEL" },
+            { day: 4, name: "有明far east village" },
+            { day: 4, name: "VESSEL INN千葉駅前" }
+        ];
+
+        // 顏色映射
+        const dayColors = { 1:'#2e8b57', 2:'#d62828', 3:'#f77f00', 4:'#fcbf49', 5:'#555555' };
+
+        // 狀態
+        let currentItineraryIndex = 0;
+        let markers = [];
+        let bounds;
+
+        /**
+         * 讓指定座標在鏡頭中落在「螢幕下方、距底部 marginBottom 像素」的位置
+         */
+        function flyToPinNearBottom(latlng, zoom = 12, marginBottom = BOTTOM_SAFE_MARGIN) {
+            const size = map.getSize();
+            const point = map.project(latlng, zoom);
+            const offset = L.point(0, (size.y / 2) - marginBottom);
+            const targetPoint = point.subtract(offset);
+            const targetLatLng = map.unproject(targetPoint, zoom);
+            map.flyTo(targetLatLng, zoom, { animate: true, duration: 0.8 });
+        }
+
+        /**
+         * 更新場景顯示
+         */
+        function updateSceneDisplay(index) {
+            const total = itinerary.length;
+            if (index < 0) index = total - 1;
+            if (index >= total) index = 0;
+
+            currentItineraryIndex = index;
+            if (!markers[currentItineraryIndex]) {
+                console.error("Marker not found at index:", currentItineraryIndex);
+                return;
+            }
+
+            const item = itinerary[currentItineraryIndex];
+            const marker = markers[currentItineraryIndex];
+
+            // 讓點靠下（留 200px 安全距離）
+            flyToPinNearBottom(item.coords, 12);
+
+            map.closePopup();
+            marker.openPopup();
+        }
+
+        function nextScene() { updateSceneDisplay(currentItineraryIndex + 1); }
+        function prevScene() { updateSceneDisplay(currentItineraryIndex - 1); }
+
+        /**
+         * 顯示所有景點（全覽時也留出底部空間）
+         */
+        function showAllScenes() {
+            map.closePopup();
+            map.fitBounds(bounds, {
+                paddingTopLeft: [50, 50],
+                paddingBottomRight: [50, BOTTOM_SAFE_MARGIN + 20] // 220px
+            });
+        }
+
+        // ===============================================
+        // 飯店清單相關功能
+        // ===============================================
+
+        /**
+         * 創建 Google Maps 連結，用於搜尋飯店及周邊超市/美食。
+         * @param {string} hotelName - 飯店名稱。
+         * @returns {string} Google Maps 搜尋 URL。
+         */
+        function createGoogleMapsUrl(hotelName) {
+            // 構造搜尋字串：飯店名稱 + "附近 超市 美食 日本"
+            const searchQuery = `${hotelName} 附近 超市 美食 日本`;
+            // Google Maps 搜尋 URL 基礎 (q=搜尋字串)
+            const baseUrl = 'https://www.google.com/maps/search/';
+            // 對搜尋字串進行 URL 編碼
+            const encodedQuery = encodeURIComponent(searchQuery);
+            return `${baseUrl}${encodedQuery}`;
+        }
+
+        /**
+         * 打開飯店清單彈窗
+         */
+        function openHotelListModal() {
+            const modal = document.getElementById('hotel-modal');
+            const listContainer = document.getElementById('hotel-list-content');
+            listContainer.innerHTML = ''; // 清空舊內容
+
+            let currentDay = 0;
+            hotelData.forEach(item => {
+                if (item.day !== currentDay) {
+                    currentDay = item.day;
+                    const dayHeader = document.createElement('h3');
+                    dayHeader.textContent = `第 ${item.day} 天 住宿選擇`;
+                    listContainer.appendChild(dayHeader);
+                }
+
+                const button = document.createElement('button');
+                button.className = 'hotel-link-button';
+                button.textContent = item.name;
+                button.title = `點擊搜尋 ${item.name} 附近超市及美食`;
+                
+                // 設置點擊事件：開啟 Google Maps 搜尋
+                button.onclick = () => {
+                    const url = createGoogleMapsUrl(item.name);
+                    window.open(url, '_blank'); // 在新分頁開啟
+                    closeHotelListModal(); // 關閉彈窗
+                };
+                listContainer.appendChild(button);
+            });
+
+            modal.style.display = 'block';
+        }
+
+        /**
+         * 關閉飯店清單彈窗
+         */
+        function closeHotelListModal() {
+            document.getElementById('hotel-modal').style.display = 'none';
+        }
+
+        // 建立標記與路線 (保持不變)
+        let polylinePoints = [];
+        itinerary.forEach(function(item, index) {
+            const popupContent = `
+            <div class="custom-popup">
+                <h2 class="leaflet-popup-header">第 ${item.day} 天：${item.title}</h2>
+                ${item.note ? `<p class="scene-note-content"><b>景點備註：</b> ${item.note}</p><hr>` : ''}
+                <p class="itinerary-content"><b>當日完整行程：</b><br>${fullItineraries[item.day]}</p>
+            </div>`;
+            const isEmoji = isNaN(item.label);
+            const labelClass = isEmoji ? 'emoji-label' : '';
+
+            const marker = L.marker(item.coords, {
+                icon: L.divIcon({
+                    className: `my-div-icon day-${item.day}-icon`,
+                    html: `<span class="${labelClass}">${item.label}</span>`
+                })
+            }).bindPopup(popupContent).addTo(map);
+
+            markers.push(marker);
+            polylinePoints.push({ coords: item.coords, day: item.day });
+
+            marker.on('click', function() { updateSceneDisplay(index); });
+        });
+
+        // 多色路線 (保持不變)
+        let currentDayPoints = [];
+        for (let i = 0; i < polylinePoints.length; i++) {
+            currentDayPoints.push(polylinePoints[i].coords);
+            if (i < polylinePoints.length - 1 && polylinePoints[i].day !== polylinePoints[i+1].day) {
+                L.polyline(currentDayPoints, { color: dayColors[polylinePoints[i].day], weight: 5 }).addTo(map);
+                currentDayPoints = [polylinePoints[i].coords];
+            }
+        }
+        L.polyline(currentDayPoints, { color: dayColors[polylinePoints[polylinePoints.length-1].day], weight: 5 }).addTo(map);
+
+        // 全覽邊界（初始也留底部空間）
+        bounds = L.latLngBounds(polylinePoints.map(p => p.coords));
+        map.fitBounds(bounds, {
+            paddingTopLeft: [50, 50],
+            paddingBottomRight: [50, BOTTOM_SAFE_MARGIN + 20] // 220px
+        });
+
+        // 控制項與事件
+        window.onload = function() {
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+            L.control.scale({ imperial: false }).addTo(map);
+
+            if (typeof L.control.mousePosition === 'function') {
+                L.control.mousePosition({ position: 'bottomleft', separator: '，', prefix: '座標：' }).addTo(map);
+            } else {
+                console.warn("Leaflet MousePosition plugin failed to initialize.");
+            }
+
+            // 綁定事件監聽器
+            document.getElementById('prev-scene-button')?.addEventListener('click', prevScene);
+            document.getElementById('next-scene-button')?.addEventListener('click', nextScene);
+            document.getElementById('show-all-button')?.addEventListener('click', showAllScenes);
+            document.getElementById('hotel-list-button')?.addEventListener('click', openHotelListModal); // 新增的按鈕事件
+
+            // 點擊彈窗外部關閉
+            const modal = document.getElementById('hotel-modal');
+            window.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    closeHotelListModal();
+                }
+            });
+
+            if (markers.length > 0) updateSceneDisplay(0);
+        };
+    </script>
+</body>
+</html>
