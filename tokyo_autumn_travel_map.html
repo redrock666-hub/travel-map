@@ -130,7 +130,8 @@
             border-radius: 12px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5);
             width: 90%; 
-            max-width: 350px; 
+            /* 調整 max-width 讓彈窗變窄 */
+            max-width: 400px; 
             max-height: 80vh;
             overflow-y: auto;
             position: relative;
@@ -138,8 +139,10 @@
         .modal-content h2 {
             color: #0078d7; border-bottom: 2px solid #0078d7; padding-bottom: 10px; margin-top: 0;
         }
+        /* 調整 h3 樣式以適應合併後的標題 */
         .modal-content h3 {
-            color: #555; margin-top: 15px; margin-bottom: 5px; font-size: 1.1em;
+            color: #555; margin-top: 15px; margin-bottom: 10px; /* 增加底部間距 */
+            font-size: 1.1em;
             border-left: 4px solid #a453ff; padding-left: 10px;
         }
         .close-button {
@@ -150,15 +153,61 @@
         .close-button:focus {
             color: #000; text-decoration: none; cursor: pointer;
         }
+        /* 移除 hotel-name-header 的樣式，因為它將被 h3 取代 */
+        /* .hotel-name-header {
+            color: #333; margin: 5px 0 10px 0; font-size: 1.1em;
+            font-weight: 600;
+        } */
+        .button-group {
+            display: flex;
+            flex-direction: column; /* 預設為垂直堆疊 */
+            gap: 8px;
+        }
         .hotel-link-button {
             width: 100%; background-color: #e9f5ff; color: #333; border: 1px solid #ccc;
-            margin-bottom: 8px; text-align: left; padding: 12px 15px; font-size: 16px;
+            margin-bottom: 0px; /* 移除原本的 margin-bottom */
+            text-align: center; padding: 10px 15px; font-size: 15px;
             border-radius: 8px; transition: background-color 0.2s, border-color 0.2s;
             box-shadow: none !important;
+            font-weight: 500;
         }
-        .hotel-link-button:hover {
-            background-color: #d1e5ff; border-color: #0078d7;
+        /* 搜尋按鈕樣式 */
+        .hotel-search-button {
+            background-color: #e9f5ff;
+            color: #0078d7;
+            border: 1px solid #0078d7;
         }
+        .hotel-search-button:hover {
+            background-color: #d1e5ff;
+        }
+        /* 顯示飯店按鈕樣式 */
+        .hotel-show-button {
+            background-color: #a453ff;
+            color: #fff;
+            border: 1px solid #a453ff;
+        }
+        .hotel-show-button:hover {
+            background-color: #8c3bcc;
+        }
+
+        /* 在桌面/平板上橫向顯示按鈕 */
+        @media (min-width: 400px) {
+             .button-group {
+                flex-direction: row; /* 寬屏下橫向排列 */
+                justify-content: space-between;
+            }
+            .hotel-link-button {
+                width: calc(50% - 4px); /* 寬度佔一半，減去間距 */
+            }
+        }
+        /* 分隔線 */
+        .hotel-item-container + hr {
+            margin-top: 15px;
+            margin-bottom: 15px;
+            border: 0;
+            border-top: 1px solid #eee;
+        }
+
 
         /* 針對小螢幕調整模態框 */
         @media (max-width: 600px) {
@@ -187,7 +236,9 @@
             <div id="hotel-list-content">
                 <!-- 飯店清單將由 JavaScript 動態生成 -->
             </div>
-            <p style="font-size: 14px; color: #D62828; margin-top: 20px; text-align: center;">點擊飯店名稱，將在新分頁搜尋其附近之超市及美食。</p>			
+            <!-- 更新說明文字: 靠左對齊並加上署名 -->
+            <p style="font-size: 14px; color: #333; margin-top: 20px; text-align: left;">點擊 **🔍** 搜尋周邊美食 (Google地圖)，點擊 **📍** 可在 Google 地圖上定位飯店。..【山裡可能找不到超市喔! by協坤.英華】</p>			
+        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
@@ -231,27 +282,13 @@
             { title: "離開東京成田機場（NRT）", coords: [35.764722, 140.386389], note: "下午前往成田機場，搭乘國泰 CX451 (15:20 → 18:40)返回桃園國際機場。", label: "✈️", day: 5 }
         ];
 
-        // 新增飯店清單資料
+        // 新增飯店清單資料 - 包含 lat/lon 座標
         const hotelData = [
-            { day: 1, name: "湯樂城國際渡假酒店" },
-            { day: 2, name: "富士美華RESORT" },
-        //    { day: 2, name: "富士河口湖RESORT" },
-         //   { day: 2, name: "春日居VIEW" },
-         //   { day: 2, name: "富士松園" },
-            { day: 3, name: "輕井澤GREEN PLAZA" },
-         //   { day: 3, name: "輕井澤1130" },
-         //   { day: 3, name: "輕井澤總統" },
-         //   { day: 3, name: "北輕井澤Golden Forest" },
-         //   { day: 3, name: "輕井澤王子小木屋" },
-         //   { day: 4, name: "東京灣幕張APA" },
-         //   { day: 4, name: "LAGENT東京灣" },
-         //   { day: 4, name: "MONday Premium豊洲" },
-         //   { day: 4, name: "上野光芒酒店" },
-         //   { day: 4, name: "Springs Makuhari 幕張春天" },
-            { day: 4, name: "Tmark City Hotel 東京大森" }//,
-         //   { day: 4, name: "CVS BAY HOTEL" },
-         //   { day: 4, name: "有明far east village" },
-         //   { day: 4, name: "VESSEL INN千葉駅前" }
+            // 飯店座標用於地圖中心化，請確保這些座標是準確的
+            { day: 1, name: "湯樂城國際渡假酒店", lat: 35.7937, lon: 140.3015 }, // 預估成田機場附近座標
+            { day: 2, name: "富士美華RESORT", lat: 35.48938, lon: 138.8066 }, // 預估富士山/河口湖附近座標
+            { day: 3, name: "輕井澤GREEN PLAZA", lat: 36.4253, lon: 138.5605 }, // 預估輕井澤附近座標
+            { day: 4, name: "Tmark City Hotel 東京大森", lat: 35.5898, lon: 139.7344 } // 預估大森附近座標
         ];
 
         // 顏色映射
@@ -317,18 +354,40 @@
         // ===============================================
 
         /**
-         * 創建 Google Maps 連結，用於搜尋飯店及周邊超市/美食。
-         * @param {string} hotelName - 飯店名稱。
+         * 創建 Google Maps 連結，使用關鍵字查詢格式，並以座標精確定位中心點。
+         * 透過座標強制定位，解決一般搜尋不精確的問題。
+         * @param {string} hotelName - 飯店名稱 (將會被納入 URL 搜尋詞，以鎖定地區)。
+         * @param {number} lat - 飯店緯度。
+         * @param {number} lon - 飯店經度。
          * @returns {string} Google Maps 搜尋 URL。
          */
-        function createGoogleMapsUrl(hotelName) {
-            // 構造搜尋字串：飯店名稱 + "附近 超市 美食 日本"
-            const searchQuery = `${hotelName} 附近 超市 美食 日本`;
-            // Google Maps 搜尋 URL 基礎 (q=搜尋字串)
-            const baseUrl = 'https://www.google.com/maps/search/';
-            // 對搜尋字串進行 URL 編碼
-            const encodedQuery = encodeURIComponent(searchQuery);
-            return `${baseUrl}${encodedQuery}`;
+        function createGoogleMapsSearchUrl(hotelName, lat, lon) {
+            // *** 修正：將飯店名稱和國家名稱加入查詢字串，以克服 IP 定位偏差 ***
+            // 查詢關鍵字：超市 美食 near [飯店名稱] 日本
+            const fullQuery = `超市 美食 near ${hotelName} 日本`;
+            const encodedQuery = encodeURIComponent(fullQuery);
+            // 結構：https://www.google.com/maps/search/[EncodedQuery]/@[lat],[lon],[zoom]z
+            // 15z 是合適的縮放級別，強制 Google 以此坐標為中心進行搜索
+            return `https://www.google.com/maps/search/${encodedQuery}/@${lat},${lon},15z`;
+        }
+        
+        /**
+         * 創建 Google Maps 連結，用於顯示飯店精確位置。
+         * @param {number} lat - 飯店緯度。
+         * @param {number} lon - 飯店經度。
+         * @returns {string} Google Maps URL。
+         */
+        function createGoogleMapsHotelUrl(lat, lon) {
+            // 使用座標定位，並給予一個標記
+            // 結構：https://www.google.com/maps/search/?api=1&query=[lat],[lon]
+            return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+        }
+
+        /**
+         * 關閉飯店清單彈窗
+         */
+        function closeHotelListModal() {
+            document.getElementById('hotel-modal').style.display = 'none';
         }
 
         /**
@@ -339,38 +398,62 @@
             const listContainer = document.getElementById('hotel-list-content');
             listContainer.innerHTML = ''; // 清空舊內容
 
-            let currentDay = 0;
+            // 調整: 移除 currentDay 判斷，直接合併天數和飯店名稱到 h3 標題中
             hotelData.forEach(item => {
-                if (item.day !== currentDay) {
-                    currentDay = item.day;
-                    const dayHeader = document.createElement('h3');
-                    dayHeader.textContent = `第 ${item.day} 天 住宿選擇`;
-                    listContainer.appendChild(dayHeader);
-                }
+                // 1. 合併天數和飯店名稱到單行 h3 標題
+                const combinedHeader = document.createElement('h3');
+                combinedHeader.textContent = `第 ${item.day} 天 - ${item.name}`;
+                listContainer.appendChild(combinedHeader);
 
-                const button = document.createElement('button');
-                button.className = 'hotel-link-button';
-                button.textContent = item.name;
-                button.title = `點擊搜尋 ${item.name} 附近超市及美食`;
+                const buttonGroup = document.createElement('div');
+                buttonGroup.className = 'button-group'; // 按鈕組容器
+
+                // 2. 搜尋周邊超市/美食 按鈕 (移除 (Google))
+                const searchButton = document.createElement('button');
+                searchButton.className = 'hotel-link-button hotel-search-button';
+                searchButton.innerHTML = '🔍 周邊超市/美食'; // (Google) 已移除
+                searchButton.title = `使用 Google 搜尋 ${item.name} 附近超市及美食 (以座標定位)`;
                 
-                // 設置點擊事件：開啟 Google Maps 搜尋
-                button.onclick = () => {
-                    const url = createGoogleMapsUrl(item.name);
-                    window.open(url, '_blank'); // 在新分頁開啟
-                    closeHotelListModal(); // 關閉彈窗
+                searchButton.onclick = () => {
+                    if (item.lat && item.lon) {
+                        // 使用新的函式，包含飯店名稱和國家
+                        const url = createGoogleMapsSearchUrl(item.name, item.lat, item.lon);
+                        window.open(url, '_blank'); // 在新分頁開啟
+                    } else {
+                        console.error("Missing coordinates for hotel:", item.name);
+                    }
+                    // 不關閉彈窗，方便用戶繼續操作
                 };
-                listContainer.appendChild(button);
+                buttonGroup.appendChild(searchButton);
+
+                // 2. 顯示飯店地圖位置 按鈕 (移除 (Google 地圖))
+                const showButton = document.createElement('button');
+                showButton.className = 'hotel-link-button hotel-show-button';
+                showButton.innerHTML = '📍 顯示飯店'; // (Google 地圖) 已移除
+                showButton.title = `在 Google 地圖上顯示 ${item.name} 的確切位置`;
+                
+                showButton.onclick = () => {
+                    if (item.lat && item.lon) {
+                        const url = createGoogleMapsHotelUrl(item.lat, item.lon);
+                        window.open(url, '_blank'); // 在新分頁開啟
+                    } else {
+                        console.error("Missing coordinates for hotel:", item.name);
+                    }
+                    // 不關閉彈窗
+                };
+                buttonGroup.appendChild(showButton);
+                
+                listContainer.appendChild(buttonGroup);
+                
+                // 添加分隔線 (除了最後一個元素)
+                if (item.day < hotelData[hotelData.length - 1].day) {
+                    listContainer.appendChild(document.createElement('hr'));
+                }
             });
 
             modal.style.display = 'block';
         }
 
-        /**
-         * 關閉飯店清單彈窗
-         */
-        function closeHotelListModal() {
-            document.getElementById('hotel-modal').style.display = 'none';
-        }
 
         // 建立標記與路線 (保持不變)
         let polylinePoints = [];
@@ -445,4 +528,3 @@
     </script>
 </body>
 </html>
-
