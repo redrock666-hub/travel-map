@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2026 曼谷奢華雙酒店家族之旅互動地圖</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0f172a;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Leaflet 自訂彈窗樣式 */
+        .custom-popup .leaflet-popup-content-wrapper {
+            border-radius: 16px;
+            padding: 4px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+            background: #ffffff;
+        }
+        .custom-popup .leaflet-popup-tip {
+            background: #ffffff;
+        }
+
+        /* 地圖中文標籤膠囊樣式 */
+        .custom-marker-pill {
+            display: inline-flex;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.96);
+            padding: 3px 8px 3px 4px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            border: 1.5px solid #ffffff;
+            white-space: nowrap;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+        .custom-marker-pill:active, .custom-marker-pill:hover {
+            transform: scale(1.08);
+            z-index: 1000 !important;
+            background-color: #ffffff;
+        }
+        .custom-marker-badge {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+            margin-right: 5px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+        .custom-marker-text {
+            font-size: 11px;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.2;
+            letter-spacing: -0.2px;
+        }
+
+        /* 手機底欄抽屜動畫 */
+        #bottom-drawer {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 30;
+        }
+        .drawer-collapsed {
+            transform: translateY(calc(100% - 78px));
+        }
+        .drawer-expanded {
+            transform: translateY(0);
+        }
+
+        /* 隱藏原生滾動條但保持滾動 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 flex flex-col justify-between select-none">
+
+    <!-- 頁頭資訊列 -->
+    <header class="fixed top-0 left-0 right-0 z-30 bg-slate-900/95 backdrop-blur-md text-white px-3 py-2 flex items-center justify-between border-b border-slate-800 shadow-lg">
+        <div class="flex items-center space-x-2">
+            <span class="text-xl">🇹🇭</span>
+            <div>
+                <h1 class="text-xs md:text-sm font-bold tracking-wide leading-tight">曼谷奢華雙酒店家族之旅</h1>
+                <p class="text-[10px] text-slate-400">Capella & Four Seasons • 2026/07/30 - 08/04</p>
+            </div>
+        </div>
+        
+        <!-- 頂部按鈕區：包含行程摘要與航班資訊 -->
+        <div class="flex items-center space-x-1.5">
+            <button onclick="openSummaryModal('summary')" class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-[11px] px-2.5 py-1.5 rounded-full border border-amber-400/30 flex items-center space-x-1 transition active:scale-95 shadow-md font-medium">
+                <i class="fas fa-list-check text-[10px]"></i>
+                <span>行程摘要</span>
+            </button>
+            <button onclick="openSummaryModal('flights')" class="bg-indigo-600/90 hover:bg-indigo-600 text-white text-[11px] px-2.5 py-1.5 rounded-full border border-indigo-400/30 flex items-center space-x-1 transition active:scale-95 shadow-md font-medium">
+                <i class="fas fa-plane text-[10px]"></i>
+                <span>航班</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 頂部中文提示橫幅 -->
+    <div class="fixed top-14 left-3 right-3 z-20 pointer-events-none">
+        <div class="bg-slate-900/85 backdrop-blur-md text-white text-[11px] px-3 py-1.5 rounded-full shadow-md flex items-center justify-between border border-slate-700/60 max-w-sm mx-auto">
+            <span class="flex items-center space-x-1 truncate">
+                <i class="fas fa-map-marker-alt text-red-400 mr-1"></i>
+                <span class="text-slate-200 font-medium">點擊景點直達定位 & 查看說明</span>
+            </span>
+            <span class="text-[10px] text-amber-300 font-bold shrink-0 ml-1">點擊上方【行程摘要】看明細</span>
+        </div>
+    </div>
+
+    <!-- 地圖容器 -->
+    <div id="map"></div>
+
+    <!-- 定位按鈕 (GPS) -->
+    <button onclick="locateUser()" class="fixed right-4 bottom-24 z-20 bg-white/90 text-slate-800 p-3 rounded-full shadow-lg border border-slate-200 active:scale-90 transition" title="我的位置">
+        <i class="fas fa-location-crosshairs text-base text-blue-600"></i>
+    </button>
+
+    <!-- 底部滑動抽屜 (Bottom Sheet) -->
+    <div id="bottom-drawer" class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 rounded-t-2xl shadow-2xl flex flex-col drawer-collapsed max-h-[78vh]">
+        
+        <!-- 抽屜抓手與天數選擇器 Header -->
+        <div class="p-2.5 pb-2 cursor-pointer flex flex-col items-center border-b border-slate-800/80" onclick="toggleDrawer()">
+            <div class="w-10 h-1 bg-slate-600 rounded-full mb-2"></div>
+            
+            <!-- 天數標籤橫向滾動區 -->
+            <div class="w-full flex space-x-1.5 overflow-x-auto no-scrollbar py-0.5 px-1" onclick="event.stopPropagation()">
+                <button onclick="filterDay('all')" class="day-btn active-day px-3 py-1 text-[11px] font-bold rounded-full border border-indigo-500 bg-indigo-600 text-white shrink-0">全部天數</button>
+                <button onclick="filterDay(1)" class="day-btn px-3 py-1 text-[11px] font-medium rounded-full border border-slate-700 bg-slate-800 text-slate-300 shrink-0">D1 7/30</button>
+                <button onclick="filterDay(2)" class="day-btn px-3 py-1 text-[11px] font-medium rounded-full border border-slate-700 bg-slate-800 text-slate-300 shrink-0">D2 7/31</button>
+                <button onclick="filterDay(3)" class="day-btn px-3 py-1 text-[11px] font-medium rounded-full border border-slate-700 bg-slate-800 text-slate-300 shrink-0">D3 8/1</button>
+                <button onclick="filterDay(4)" class="day-btn px-3 py-1 text-[11px] font-medium rounded-full border border-slate-700 bg-slate-800 text-slate-300 shrink-0">D4 8/2</button>
+                <button onclick="filterDay(5)" class="day-btn px-3 py-1 text-[11px] font-medium rounded-full border border-slate-700 bg-slate-800 text-slate-300 shrink-0">D5 8/3</button>
+                <button onclick="filterDay(6)" class="day-btn px-3 py-1 text-[11px] font-medium rounded-full border border-slate-700 bg-slate-800 text-slate-300 shrink-0">D6 8/4</button>
+            </div>
+        </div>
+
+        <!-- 行程列表卡片區 -->
+        <div id="spots-list" class="p-3 overflow-y-auto space-y-2.5 max-h-[calc(78vh-78px)] pb-10">
+            <!-- 由 JavaScript 動態渲染 -->
+        </div>
+    </div>
+
+    <!-- 全功能行程摘要與備忘 Modal -->
+    <div id="summary-modal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md hidden flex items-center justify-center p-3">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-2xl p-4 md:p-5 shadow-2xl relative text-slate-200 flex flex-col max-h-[90vh]">
+            
+            <!-- 關閉按鈕 -->
+            <button onclick="closeSummaryModal()" class="absolute top-3.5 right-3.5 text-slate-400 hover:text-white p-1 z-10">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+
+            <!-- 彈窗 Header 頁籤切換 -->
+            <div class="border-b border-slate-800 pb-3 mb-3 pr-8">
+                <h2 class="text-sm md:text-base font-bold text-white flex items-center space-x-2">
+                    <i class="fas fa-clipboard-list text-amber-400"></i>
+                    <span>2026 曼谷家族之旅總覽</span>
+                </h2>
+                <!-- 頁籤選單 -->
+                <div class="flex space-x-1 mt-2.5">
+                    <button id="tab-btn-summary" onclick="switchTab('summary')" class="tab-btn text-xs px-3 py-1 rounded-lg font-medium transition bg-indigo-600 text-white">
+                        <i class="fas fa-copy mr-1"></i>LINE 文字摘要
+                    </button>
+                    <button id="tab-btn-flights" onclick="switchTab('flights')" class="tab-btn text-xs px-3 py-1 rounded-lg font-medium transition bg-slate-800 text-slate-300 hover:bg-slate-700">
+                        <i class="fas fa-plane mr-1"></i>航班與飯店分房
+                    </button>
+                    <button id="tab-btn-outdoor" onclick="switchTab('outdoor')" class="tab-btn text-xs px-3 py-1 rounded-lg font-medium transition bg-slate-800 text-slate-300 hover:bg-slate-700">
+                        <i class="fas fa-sun mr-1"></i>戶外與天氣
+                    </button>
+                </div>
+            </div>
+
+            <!-- 彈窗可滾動內容區 -->
+            <div class="overflow-y-auto space-y-4 pr-1 text-xs leading-relaxed flex-1">
+                
+                <!-- 頁籤 1: LINE 簡潔文字格式 (含一鍵複製按鈕) -->
+                <div id="tab-content-summary" class="tab-content space-y-3">
+                    <div class="flex justify-between items-center bg-slate-800/90 p-2.5 rounded-xl border border-slate-700/80">
+                        <div>
+                            <p class="font-bold text-amber-300 text-xs">一鍵複製行程發送到 LINE 群組</p>
+                            <p class="text-[10px] text-slate-400">包含每日航班、天氣、行程重點與 Capella 免費活動</p>
+                        </div>
+                        <button onclick="copyLineText()" class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1 shrink-0 transition shadow-md">
+                            <i class="fas fa-copy"></i>
+                            <span id="copy-btn-text">複製文字</span>
+                        </button>
+                    </div>
+
+                    <!-- 預覽/複製區域 -->
+                    <textarea id="line-text-area" readonly class="w-full h-64 bg-slate-950 text-slate-300 p-3 rounded-xl border border-slate-800 font-mono text-[11px] leading-normal select-all focus:outline-none">🇹🇭 2026 曼谷奢華雙酒店 6日家族之旅 ✈️
+
+✈️ 航班資訊（皆為當地時間）
+• 去程｜07/30(四) CI835 台北 TPE 13:30 ➔ 曼谷 BKK 16:20
+• 回程｜08/04(二) CI832 曼谷 BKK 13:20 ➔ 台北 TPE 18:00
+
+🏨 住宿與房型配置
+【7/30 - 8/2 前 3 晚全體住 Capella Bangkok】
+ • 萱+暘：Riverfront Premier King (一大床)
+ • 爸+媽+妹：Riverfront Premier Twin + Extra Bed (兩小床+加床)
+
+【8/2 - 8/4 後 2 晚分開入住】
+ • 萱+暘（續住 Capella）：Riverfront Premier King
+ • 爸+媽+妹（移轉至四季 Four Seasons）：Premier River View King + Extra Bed (一大床+加床)
+
+----------------------------------
+
+📅 Day 1｜7/30 (四) 抵達曼谷 & 迎賓晚宴
+🌤️ 天氣：33°C / 26°C (降雨機率 94% 🌧️)
+• 16:20 抵達 BKK 機場，搭乘【預約接機轎車】前往 Capella 辦理 Check-in
+• 18:00 - 19:30 房間陽台賞河景、享用迎賓飲品
+• 20:00 前往 IconSiam (暹羅天地) 1F 室內水上市場（飯店接駁船約 10-15 分鐘）
+
+📅 Day 2｜7/31 (五) 野生動物園 & 尊榮舒壓
+🌤️ 天氣：32°C / 26°C (降雨機率 96% 🌧️)
+• 09:00 - 15:30 曼谷野生動物園 Safari World（包車單程約 50-70 分鐘）
+• 16:30 - 18:30 回市區放鬆按摩（推薦 Let's Relax 或飯店內 Auriga Wellness）
+• 19:30 晚餐（飯店內享用）
+
+📅 Day 3｜8/1 (六) 經典古蹟巡禮 & 碼頭夜市
+🌤️ 天氣：34°C / 26°C (降雨機率 61% 🌦️)
+• 09:00 - 12:30 古蹟巡禮：大皇宮 ➔ 玉佛寺 ➔ 臥佛寺 ➔ 鄭王廟
+• 13:30 - 17:30 【酒店留白】泳池放鬆、享用 Cin Cin Hour
+• 18:30 前往 Asiatique 碼頭夜市吃海鮮、逛街（接駁船/計程車約 10-15 分鐘）
+💡 Capella 活動：11:00 哈達瑜伽流 / 16:00 泰式草本智慧 / 17:00 Cin Cin Hour
+
+📅 Day 4｜8/2 (日) 飯店移轉 & 石龍軍路舊城漫步
+🌤️ 天氣：33°C / 27°C (降雨機率 65% 🌧️)
+• 12:00 前 酒店留白、享用早餐，辦理 Check-out
+• 12:00 爸+媽+妹移轉至隔壁四季酒店 Four Seasons（走通道 3-5 分鐘）
+• 14:00 - 16:30 石龍軍路創意街區（Warehouse 30 / 老屋咖啡廳，計程車約 5-10 分鐘）
+• 17:00 - 19:00 按摩放鬆（推薦 Peranakan Anya Spa 古典娘惹風）
+• 19:30 四季酒店 BKK Social Club 酒吧小酌
+💡 Capella 活動：11:00 泰拳親子體驗 / 16:00 溫室的問候 / 17:00 Cin Cin Hour
+
+📅 Day 5｜8/3 (一) 市中心採買 & 爸媽看 Show
+🌤️ 天氣：33°C / 27°C (降雨機率 62% 🌧️)
+• 10:00 - 16:00 四面佛參拜 ➔ Central World 逛街吃飯 ➔ Big C 採買伴手禮
+• 16:30 - 18:30 回飯店休息、整理戰利品（下班車潮請預留 45-60 分鐘車程）
+• 20:00 - 21:15 爸媽前往觀賞【曼谷金東尼人妖秀】(其他人可於市中心享用海鮮大餐)
+
+📅 Day 6｜8/4 (二) 告別曼谷 & 圓滿返台
+🌤️ 天氣：33°C / 26°C (降雨機率 60% 🌦️)
+• 08:00 - 10:30 河畔花園散步、家族大合照、打包行李
+• 10:45 搭乘【預約送機轎車】前往 BKK 機場（專車約 45-60 分鐘）
+• 13:20 搭乘華航 CI832 返台（18:00 抵達桃園機場）
+
+----------------------------------
+
+📌 嘉佩樂 Capella 每日免費活動（自由參加）
+• 07:00 Morning Salutation (早晨伸展)
+• 17:00 Cin Cin Hour (河畔免費調酒 Happy Hour)</textarea>
+                </div>
+
+                <!-- 頁籤 2: 航班與飯店詳細卡片 -->
+                <div id="tab-content-flights" class="tab-content hidden space-y-3">
+                    <!-- 去程航班 -->
+                    <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700/60 space-y-1">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-indigo-300">去程 • 華航 CI 835</span>
+                            <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded font-mono">07/30 (四)</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs font-mono pt-1">
+                            <div>
+                                <p class="font-bold text-sm text-white">13:30</p>
+                                <p class="text-[10px] text-slate-400">台北 TPE (台灣時間)</p>
+                            </div>
+                            <i class="fas fa-arrow-right text-slate-500 text-xs"></i>
+                            <div class="text-right">
+                                <p class="font-bold text-sm text-white">16:20</p>
+                                <p class="text-[10px] text-slate-400">曼谷 BKK (泰國時間)</p>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 pt-1">⏱️ 飛行時間：約 3 小時 50 分鐘 • 已預約接機轎車</p>
+                    </div>
+
+                    <!-- 回程航班 -->
+                    <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700/60 space-y-1">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-emerald-300">回程 • 華航 CI 832</span>
+                            <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono">08/04 (二)</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs font-mono pt-1">
+                            <div>
+                                <p class="font-bold text-sm text-white">13:20</p>
+                                <p class="text-[10px] text-slate-400">曼谷 BKK (泰國時間)</p>
+                            </div>
+                            <i class="fas fa-arrow-right text-slate-500 text-xs"></i>
+                            <div class="text-right">
+                                <p class="font-bold text-sm text-white">18:00</p>
+                                <p class="text-[10px] text-slate-400">台北 TPE (台灣時間)</p>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 pt-1">⏱️ 飛行時間：約 3 小時 40 分鐘 • 已預約送機轎車 (10:45出限)</p>
+                    </div>
+
+                    <!-- 飯店分房配置明細 -->
+                    <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/40 text-xs space-y-2">
+                        <p class="font-bold text-amber-300 flex items-center">
+                            <i class="fas fa-hotel mr-1.5"></i> 飯店分房與房間配置
+                        </p>
+                        <div class="space-y-1.5 text-[11px] text-slate-300 border-t border-slate-700/50 pt-1.5">
+                            <p class="font-semibold text-slate-200">【7/30 - 8/2 前 3 晚全體入住 Capella Bangkok】</p>
+                            <p>• 萱 + 暘：Riverfront Premier King (一大床)</p>
+                            <p>• 爸 + 媽 + 妹：Riverfront Premier Twin + Extra Bed (兩小床+加床)</p>
+                            
+                            <p class="font-semibold text-slate-200 pt-2">【8/2 - 8/4 後 2 晚分開入住】</p>
+                            <p>• 萱 + 暘：續住 Capella Bangkok (King)</p>
+                            <p>• 爸 + 媽 + 妹：移轉至隔壁 Four Seasons Bangkok (Premier River View King + Extra Bed)</p>
+                        </div>
+                    </div>
+
+                    <!-- 旅平險與 AIS eSIM 備忘 -->
+                    <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/40 text-xs space-y-1.5">
+                        <p class="font-bold text-cyan-300 flex items-center">
+                            <i class="fas fa-shield-halved mr-1.5"></i> 旅平險 & eSIM 設定
+                        </p>
+                        <p class="text-[11px] text-slate-300">
+                            • 旅平險：2026/07/30 09:00 ~ 08/05 09:00 (台灣時間，共6天)<br>
+                            • AIS eSIM：出發前完成實名制登記，抵達曼谷降落開啟「數據漫遊」連上 AIS 網路即自動開始計時 24小時/日，天數完全充足。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 頁籤 3: 戶外行程時間表與天氣 -->
+                <div id="tab-content-outdoor" class="tab-content hidden space-y-2.5">
+                    <div class="bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-xl text-[11px] text-amber-200">
+                        <i class="fas fa-umbrella-beach mr-1"></i>
+                        曼谷 7-8 月體感約 37°C~41°C，容易有午後陣雨，建議攜帶雨傘、防曬用品與防蚊液。
+                    </div>
+
+                    <div class="space-y-2 text-[11px]">
+                        <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/50">
+                            <span class="font-bold text-amber-300">D1 (7/30 四) IconSiam 露天河岸</span>
+                            <p class="text-slate-300 mt-0.5">20:00 搭 Capella 接駁船 ➔ 20:15 河岸公園散步 ➔ 20:45 1F 水上市場吃小吃</p>
+                        </div>
+
+                        <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/50">
+                            <span class="font-bold text-orange-300">D2 (7/31 五) 野生動物園 Safari World</span>
+                            <p class="text-slate-300 mt-0.5">10:00 專車坐車看野生動物 ➔ 11:00 漫步海洋公園、餵長頸鹿 ➔ 13:45 海豚秀</p>
+                        </div>
+
+                        <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/50">
+                            <span class="font-bold text-purple-300">D3 (8/1 六) 經典古蹟 & 碼頭夜市</span>
+                            <p class="text-slate-300 mt-0.5">09:00 大皇宮/玉佛寺 ➔ 10:30 臥佛寺 ➔ 11:30 鄭王廟 ➔ 18:30 Asiatique 碼頭夜市</p>
+                        </div>
+
+                        <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/50">
+                            <span class="font-bold text-emerald-300">D4 (8/2 日) 石龍軍路舊城漫步</span>
+                            <p class="text-slate-300 mt-0.5">14:00 舊城巷弄散步、 Warehouse 30 藝術空間 ➔ 15:30 老屋咖啡廳下午茶</p>
+                        </div>
+
+                        <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/50">
+                            <span class="font-bold text-cyan-300">D5 (8/3 一) 四面佛參拜</span>
+                            <p class="text-slate-300 mt-0.5">10:00 四面佛露天參拜 ➔ 10:30 Central World / Big C 室內採買</p>
+                        </div>
+
+                        <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/50">
+                            <span class="font-bold text-slate-300">D6 (8/4 二) 河畔花園大合照</span>
+                            <p class="text-slate-300 mt-0.5">08:30 Capella 戶外河畔花園散步、拍家族大合照 ➔ 10:45 送機專車</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal 底欄 -->
+            <div class="border-t border-slate-800 pt-3 mt-2 flex justify-end">
+                <button onclick="closeSummaryModal()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 text-xs font-bold px-4 py-2 rounded-xl border border-slate-600 transition">
+                    關閉視窗
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        const spotsData = [
+            // Day 1
+            { id: 1, day: 1, date: "7/30 (四)", time: "16:20", shortName: "Capella 嘉佩樂", name: "Capella Bangkok (嘉佩樂酒店)", lat: 13.7126, lng: 100.5100, category: "hotel", desc: "專車接機前往飯店 Check-in，享用迎賓飲品與陽台夕陽河景。", color: "#EF4444", icon: "fa-hotel" },
+            { id: 2, day: 1, date: "7/30 (四)", time: "20:00", shortName: "IconSiam 水上市場", name: "IconSiam (暹羅天地)", lat: 13.7267, lng: 100.5108, category: "shopping", desc: "搭乘飯店專屬接駁船至 IconSiam 1F 室內水上市場體驗地道泰式小吃。", color: "#EF4444", icon: "fa-utensils" },
+            
+            // Day 2
+            { id: 3, day: 2, date: "7/31 (五)", time: "09:00", shortName: "曼谷野生動物園", name: "曼谷野生動物園 Safari World", lat: 13.8654, lng: 100.7027, category: "sightseeing", desc: "包車參觀野生動物區（車內看獅子長頸鹿）、餵食秀與海豚表演。", color: "#F97316", icon: "fa-hippo" },
+            { id: 4, day: 2, date: "7/31 (五)", time: "16:30", shortName: "SPA / 按摩", name: "Let's Relax / Auriga Wellness SPA", lat: 13.7126, lng: 100.5100, category: "relax", desc: "回市區放鬆，享用熱草本球按壓或飯店內頂級 SPA 療程。", color: "#F97316", icon: "fa-spa" },
+            
+            // Day 3
+            { id: 5, day: 3, date: "8/1 (六)", time: "09:00", shortName: "大皇宮 / 玉佛寺 / 臥佛寺", name: "經典古蹟 (大皇宮 / 玉佛寺 / 臥佛寺)", lat: 13.7500, lng: 100.4913, category: "sightseeing", desc: "泰國文化巡禮，參觀莊嚴的大皇宮、玉佛寺與巨大的臥佛 (需注意服裝制限)。", color: "#8B5CF6", icon: "fa-gopuram" },
+            { id: 6, day: 3, date: "8/1 (六)", time: "11:30", shortName: "鄭王廟 (黎明寺)", name: "鄭王廟 (黎明寺)", lat: 13.7437, lng: 100.4888, category: "sightseeing", desc: "搭乘渡輪過河至鄭王廟，欣賞壯麗白塔與河岸景致。", color: "#8B5CF6", icon: "fa-camera" },
+            { id: 7, day: 3, date: "8/1 (六)", time: "18:30", shortName: "Asiatique 碼頭夜市", name: "Asiatique 碼頭夜市", lat: 13.7042, lng: 100.5034, category: "nightlife", desc: "搭接駁船至碼頭夜市，享用海鮮大餐、散步吹河風。", color: "#8B5CF6", icon: "fa-store" },
+            
+            // Day 4
+            { id: 8, day: 4, date: "8/2 (日)", time: "12:00", shortName: "四季酒店 Four Seasons", name: "Four Seasons Bangkok (四季酒店)", lat: 13.7135, lng: 100.5105, category: "hotel", desc: "爸媽妹辦理 Check-out 並移轉至隔壁四季酒店 (連通道步行 3-5 分鐘)。", color: "#10B981", icon: "fa-hotel" },
+            { id: 9, day: 4, date: "8/2 (日)", time: "14:00", shortName: "石龍軍路文青街區", name: "石龍軍路 Warehouse 30 藝術區", lat: 13.7275, lng: 100.5140, category: "culture", desc: "舊城文青街區散步，造訪 Warehouse 30 藝術倉庫與老屋咖啡廳。", color: "#10B981", icon: "fa-coffee" },
+            { id: 10, day: 4, date: "8/2 (日)", time: "17:00", shortName: "Peranakan Anya SPA", name: "Peranakan Anya Spa", lat: 13.7230, lng: 100.5150, category: "relax", desc: "古典娘惹風按摩會館，體驗古法經絡按摩放鬆體能。", color: "#10B981", icon: "fa-hands" },
+            { id: 11, day: 4, date: "8/2 (日)", time: "19:30", shortName: "BKK Social Club", name: "BKK Social Club (四季酒店)", lat: 13.7135, lng: 100.5105, category: "nightlife", desc: "世界頂級酒吧小酌，享受優雅氛圍與特調雞尾酒。", color: "#10B981", icon: "fa-glass-martini-alt" },
+            
+            // Day 5
+            { id: 12, day: 5, date: "8/3 (一)", time: "10:00", shortName: "四面佛参拜", name: "四面佛 (Erawan Shrine)", lat: 13.7445, lng: 100.5398, category: "sightseeing", desc: "市中心知名四面佛廣場參拜祈福。", color: "#06B6D4", icon: "fa-pray" },
+            { id: 13, day: 5, date: "8/3 (一)", time: "10:30", shortName: "Central World & Big C", name: "Central World & Big C 採買", lat: 13.7466, lng: 100.5390, category: "shopping", desc: "連鎖百貨大樓逛街吃飯，Big C 採買泰國伴手禮與零食。", color: "#06B6D4", icon: "fa-shopping-cart" },
+            { id: 14, day: 5, date: "8/3 (一)", time: "20:00", shortName: "金東尼人妖秀", name: "曼谷金東尼人妖秀 Show", lat: 13.7845, lng: 100.5750, category: "entertainment", desc: "爸媽專車前往觀賞泰國華麗歌舞秀表演。", color: "#06B6D4", icon: "fa-theater-masks" },
+
+            // Day 6
+            { id: 15, day: 6, date: "8/4 (二)", time: "08:00", shortName: "河畔花園散步", name: "Capella & 四季河畔花園", lat: 13.7126, lng: 100.5100, category: "relax", desc: "晨間河畔花園散步、拍攝家族大合照，悠閒收行李。", color: "#64748B", icon: "fa-camera-retro" },
+            { id: 16, day: 6, date: "8/4 (二)", time: "10:45", shortName: "曼谷 BKK 機場", name: "曼谷蘇凡納布機場 (BKK)", lat: 13.6900, lng: 100.7501, category: "airport", desc: "搭乘預約專車前往機場，搭乘 13:20 華航 CI832 返台。", color: "#64748B", icon: "fa-plane-departure" }
+        ];
+
+        const map = L.map('map', {
+            center: [13.7250, 100.5150],
+            zoom: 12,
+            zoomControl: false
+        });
+
+        // 載入 CartoDB Voyager 圖層
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap',
+            maxZoom: 19
+        }).addTo(map);
+
+        const markersMap = {};
+        let userMarker = null;
+
+        // 建立地圖地標
+        spotsData.forEach(spot => {
+            const customIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: '<div class="custom-marker-pill">' +
+                        '<div class="custom-marker-badge" style="background-color: ' + spot.color + ';">' +
+                            '<i class="fas ' + spot.icon + '"></i>' +
+                        '</div>' +
+                        '<span class="custom-marker-text">' + (spot.shortName || spot.name) + '</span>' +
+                      '</div>',
+                iconSize: [120, 28],
+                iconAnchor: [20, 14],
+                popupAnchor: [0, -14]
+            });
+
+            const googleNavUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + spot.lat + ',' + spot.lng;
+            const popupContent = '<div class="p-1 max-w-[220px]">' +
+                    '<div class="flex items-center justify-between mb-1">' +
+                        '<span class="text-[10px] font-bold px-2 py-0.5 rounded text-white" style="background-color: ' + spot.color + ';">' +
+                            'D' + spot.day + ' • ' + spot.time +
+                        '</span>' +
+                        '<span class="text-[10px] text-gray-400">' + spot.date + '</span>' +
+                    '</div>' +
+                    '<h3 class="font-bold text-gray-800 text-xs mb-1">' + spot.name + '</h3>' +
+                    '<p class="text-[11px] text-gray-600 leading-snug mb-2">' + spot.desc + '</p>' +
+                    '<a href="' + googleNavUrl + '" target="_blank" class="block text-center text-[10px] bg-blue-600 text-white font-medium py-1.5 rounded-lg active:bg-blue-700">' +
+                        '<i class="fas fa-location-arrow mr-1"></i>Google 地圖導航' +
+                    '</a>' +
+                '</div>';
+
+            const marker = L.marker([spot.lat, spot.lng], { icon: customIcon })
+                .bindPopup(popupContent, { className: 'custom-popup' })
+                .addTo(map);
+
+            markersMap[spot.id] = marker;
+        });
+
+        // 渲染側邊欄 / 抽屜卡片
+        function renderSidebar(dayFilter = 'all') {
+            const container = document.getElementById('spots-list');
+            container.innerHTML = '';
+
+            const filteredSpots = dayFilter === 'all' 
+                ? spotsData 
+                : spotsData.filter(s => s.day === dayFilter);
+
+            filteredSpots.forEach(spot => {
+                const card = document.createElement('div');
+                card.className = 'bg-slate-800/80 border border-slate-700/60 p-3 rounded-xl flex items-start space-x-3 active:bg-slate-700/60 transition cursor-pointer';
+                card.onclick = () => focusSpot(spot.id);
+
+                const googleNavUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + spot.lat + ',' + spot.lng;
+
+                card.innerHTML = '<div class="w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0 mt-0.5 shadow-md" style="background-color: ' + spot.color + ';">' +
+                        '<i class="fas ' + spot.icon + ' text-xs"></i>' +
+                    '</div>' +
+                    '<div class="flex-1 min-w-0">' +
+                        '<div class="flex items-center justify-between mb-0.5">' +
+                            '<span class="text-[10px] font-bold text-slate-300">D' + spot.day + ' • ' + spot.time + '</span>' +
+                            '<span class="text-[9px] text-slate-400 bg-slate-900/50 px-1.5 py-0.5 rounded">' + spot.date + '</span>' +
+                        '</div>' +
+                        '<h4 class="text-xs font-bold text-white truncate">' + spot.name + '</h4>' +
+                        '<p class="text-[11px] text-slate-400 line-clamp-2 mt-0.5 leading-tight">' + spot.desc + '</p>' +
+                        '<div class="mt-2 flex items-center space-x-2">' +
+                            '<button onclick="event.stopPropagation(); focusSpot(' + spot.id + ')" class="text-[10px] bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-md flex items-center space-x-1">' +
+                                '<i class="fas fa-crosshairs"></i><span>聚焦定位</span>' +
+                            '</button>' +
+                            '<a href="' + googleNavUrl + '" target="_blank" onclick="event.stopPropagation()" class="text-[10px] bg-slate-700 text-slate-200 px-2 py-0.5 rounded-md flex items-center space-x-1 hover:bg-slate-600">' +
+                                '<i class="fas fa-location-arrow text-[9px]"></i><span>導航</span>' +
+                            '</a>' +
+                        '</div>' +
+                    '</div>';
+
+                container.appendChild(card);
+            });
+        }
+
+        // 天數切換
+        function filterDay(day) {
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                btn.classList.remove('active-day', 'bg-indigo-600', 'text-white', 'border-indigo-500');
+                btn.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-700');
+            });
+            event.target.classList.add('active-day', 'bg-indigo-600', 'text-white', 'border-indigo-500');
+            
+            renderSidebar(day);
+
+            if (day !== 'all') {
+                const daySpots = spotsData.filter(s => s.day === day);
+                if (daySpots.length > 0) {
+                    const group = L.featureGroup(daySpots.map(s => markersMap[s.id]));
+                    map.fitBounds(group.getBounds().pad(0.2));
+                }
+            } else {
+                map.setView([13.7250, 100.5150], 12);
+            }
+        }
+
+        // 聚焦景點
+        function focusSpot(id) {
+            const spot = spotsData.find(s => s.id === id);
+            if (spot && markersMap[id]) {
+                map.flyTo([spot.lat, spot.lng], 15, { duration: 1.2 });
+                markersMap[id].openPopup();
+
+                const drawer = document.getElementById('bottom-drawer');
+                if (drawer.classList.contains('drawer-expanded')) {
+                    toggleDrawer();
+                }
+            }
+        }
+
+        function toggleDrawer() {
+            const drawer = document.getElementById('bottom-drawer');
+            drawer.classList.toggle('drawer-collapsed');
+            drawer.classList.toggle('drawer-expanded');
+        }
+
+        function openSummaryModal(defaultTab = 'summary') {
+            const modal = document.getElementById('summary-modal');
+            modal.classList.remove('hidden');
+            switchTab(defaultTab);
+        }
+
+        function closeSummaryModal() {
+            const modal = document.getElementById('summary-modal');
+            modal.classList.add('hidden');
+        }
+
+        function switchTab(tabKey) {
+            // 切換按鈕樣式
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('bg-slate-800', 'text-slate-300');
+            });
+            const activeBtn = document.getElementById('tab-btn-' + tabKey);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-slate-800', 'text-slate-300');
+                activeBtn.classList.add('bg-indigo-600', 'text-white');
+            }
+
+            // 切換內容顯示
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            const activeContent = document.getElementById('tab-content-' + tabKey);
+            if (activeContent) {
+                activeContent.classList.remove('hidden');
+            }
+        }
+
+        // 一鍵複製 LINE 文字
+        function copyLineText() {
+            const textArea = document.getElementById('line-text-area');
+            textArea.select();
+            document.execCommand('copy');
+
+            const btnText = document.getElementById('copy-btn-text');
+            btnText.innerText = "已複製！";
+            setTimeout(() => {
+                btnText.innerText = "複製文字";
+            }, 2000);
+        }
+
+        // 定位使用者 GPS
+        function locateUser() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    if (userMarker) {
+                        userMarker.setLatLng([lat, lng]);
+                    } else {
+                        userMarker = L.circleMarker([lat, lng], {
+                            radius: 8,
+                            fillColor: "#3B82F6",
+                            color: "#FFFFFF",
+                            weight: 2,
+                            opacity: 1,
+                            fillOpacity: 0.9
+                        }).addTo(map).bindPopup("您的目前位置");
+                    }
+                    map.flyTo([lat, lng], 15);
+                }, () => {
+                    alert("無法取得您的目前位置，請確認已授權 GPS 定位權限。");
+                });
+            } else {
+                alert("您的裝置不支援地理定位功能。");
+            }
+        }
+
+        // 初始化
+        renderSidebar('all');
+    </script>
+</body>
+</html>
