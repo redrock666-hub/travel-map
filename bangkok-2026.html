@@ -40,7 +40,7 @@
             background: #ffffff;
         }
 
-        /* 地圖中文標籤膠囊樣式 */
+        /* 地圖通用景點標籤膠囊樣式 */
         .custom-marker-pill {
             display: inline-flex;
             align-items: center;
@@ -54,10 +54,28 @@
             cursor: pointer;
         }
         .custom-marker-pill:active, .custom-marker-pill:hover {
-            transform: scale(1.08);
+            transform: scale(1.1);
             z-index: 1000 !important;
             background-color: #ffffff;
         }
+
+        /* 🏨 飯店專屬顯眼樣式 (高亮金黃主題) */
+        .hotel-marker-pill {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important;
+            border: 2px solid #f59e0b !important;
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.5) !important;
+            transform: scale(1.08);
+            z-index: 900 !important;
+        }
+        .hotel-marker-pill .custom-marker-text {
+            color: #78350f !important;
+            font-weight: 800 !important;
+        }
+        .hotel-marker-pill .custom-marker-badge {
+            background-color: #d97706 !important;
+            box-shadow: 0 2px 6px rgba(217, 119, 6, 0.4) !important;
+        }
+
         .custom-marker-badge {
             width: 22px;
             height: 22px;
@@ -130,10 +148,10 @@
     <div class="fixed top-14 left-3 right-3 z-20 pointer-events-none">
         <div class="bg-slate-900/85 backdrop-blur-md text-white text-[11px] px-3 py-1.5 rounded-full shadow-md flex items-center justify-between border border-slate-700/60 max-w-sm mx-auto">
             <span class="flex items-center space-x-1 truncate">
-                <i class="fas fa-map-marker-alt text-red-400 mr-1"></i>
-                <span class="text-slate-200 font-medium">點擊景點直達定位 & 查看說明</span>
+                <i class="fas fa-hotel text-amber-400 mr-1"></i>
+                <span class="text-slate-200 font-medium">金色標籤為飯店位置 🏨</span>
             </span>
-            <span class="text-[10px] text-amber-300 font-bold shrink-0 ml-1">點擊上方【行程摘要】看明細</span>
+            <span class="text-[10px] text-amber-300 font-bold shrink-0 ml-1">點擊地標直達導航</span>
         </div>
     </div>
 
@@ -319,7 +337,7 @@
                                 <p class="text-[10px] text-slate-400">台北 TPE (台灣時間)</p>
                             </div>
                         </div>
-                        <p class="text-[10px] text-slate-400 pt-1">⏱️ 飛行時間：約 3 小時 40 分鐘 • 已預約送機轎車 (10:45出限)</p>
+                        <p class="text-[10px] text-slate-400 pt-1">⏱️ 飛行時間：約 3 小時 40 分鐘 • 已預約送機轎車 (10:45出發)</p>
                     </div>
 
                     <!-- 飯店分房配置明細 -->
@@ -407,7 +425,7 @@
     <script>
         const spotsData = [
             // Day 1
-            { id: 1, day: 1, date: "7/30 (四)", time: "16:20", shortName: "Capella 嘉佩樂", name: "Capella Bangkok (嘉佩樂酒店)", lat: 13.7126, lng: 100.5100, category: "hotel", desc: "專車接機前往飯店 Check-in，享用迎賓飲品與陽台夕陽河景。", color: "#EF4444", icon: "fa-hotel" },
+            { id: 1, day: 1, date: "7/30 (四)", time: "16:20", shortName: "Capella 嘉佩樂酒店", name: "Capella Bangkok (嘉佩樂酒店)", lat: 13.7126, lng: 100.5100, category: "hotel", desc: "【家族入住 7/30-8/2 ＆ 萱暘續住至 8/4】專車接機前往飯店 Check-in，享用迎賓飲品與陽台夕陽河景。", color: "#D97706", icon: "fa-hotel" },
             { id: 2, day: 1, date: "7/30 (四)", time: "20:00", shortName: "IconSiam 水上市場", name: "IconSiam (暹羅天地)", lat: 13.7267, lng: 100.5108, category: "shopping", desc: "搭乘飯店專屬接駁船至 IconSiam 1F 室內水上市場體驗地道泰式小吃。", color: "#EF4444", icon: "fa-utensils" },
             
             // Day 2
@@ -420,7 +438,7 @@
             { id: 7, day: 3, date: "8/1 (六)", time: "18:30", shortName: "Asiatique 碼頭夜市", name: "Asiatique 碼頭夜市", lat: 13.7042, lng: 100.5034, category: "nightlife", desc: "搭接駁船至碼頭夜市，享用海鮮大餐、散步吹河風。", color: "#8B5CF6", icon: "fa-store" },
             
             // Day 4
-            { id: 8, day: 4, date: "8/2 (日)", time: "12:00", shortName: "四季酒店 Four Seasons", name: "Four Seasons Bangkok (四季酒店)", lat: 13.7135, lng: 100.5105, category: "hotel", desc: "爸媽妹辦理 Check-out 並移轉至隔壁四季酒店 (連通道步行 3-5 分鐘)。", color: "#10B981", icon: "fa-hotel" },
+            { id: 8, day: 4, date: "8/2 (日)", time: "12:00", shortName: "四季酒店 Four Seasons", name: "Four Seasons Bangkok (四季酒店)", lat: 13.7135, lng: 100.5105, category: "hotel", desc: "【爸媽妹 8/2-8/4 入住】辦理 Check-out 並移轉至隔壁四季酒店 (連通道步行 3-5 分鐘)。", color: "#059669", icon: "fa-hotel" },
             { id: 9, day: 4, date: "8/2 (日)", time: "14:00", shortName: "石龍軍路文青街區", name: "石龍軍路 Warehouse 30 藝術區", lat: 13.7275, lng: 100.5140, category: "culture", desc: "舊城文青街區散步，造訪 Warehouse 30 藝術倉庫與老屋咖啡廳。", color: "#10B981", icon: "fa-coffee" },
             { id: 10, day: 4, date: "8/2 (日)", time: "17:00", shortName: "Peranakan Anya SPA", name: "Peranakan Anya Spa", lat: 13.7230, lng: 100.5150, category: "relax", desc: "古典娘惹風按摩會館，體驗古法經絡按摩放鬆體能。", color: "#10B981", icon: "fa-hands" },
             { id: 11, day: 4, date: "8/2 (日)", time: "19:30", shortName: "BKK Social Club", name: "BKK Social Club (四季酒店)", lat: 13.7135, lng: 100.5105, category: "nightlife", desc: "世界頂級酒吧小酌，享受優雅氛圍與特調雞尾酒。", color: "#10B981", icon: "fa-glass-martini-alt" },
@@ -452,15 +470,20 @@
 
         // 建立地圖地標
         spotsData.forEach(spot => {
+            const isHotel = spot.category === 'hotel';
+            const pillClass = isHotel ? 'custom-marker-pill hotel-marker-pill' : 'custom-marker-pill';
+            const badgeIcon = isHotel ? 'fa-hotel' : spot.icon;
+            const displayName = (isHotel ? '🏨 ' : '') + (spot.shortName || spot.name);
+
             const customIcon = L.divIcon({
                 className: 'custom-div-icon',
-                html: '<div class="custom-marker-pill">' +
+                html: '<div class="' + pillClass + '">' +
                         '<div class="custom-marker-badge" style="background-color: ' + spot.color + ';">' +
-                            '<i class="fas ' + spot.icon + '"></i>' +
+                            '<i class="fas ' + badgeIcon + '"></i>' +
                         '</div>' +
-                        '<span class="custom-marker-text">' + (spot.shortName || spot.name) + '</span>' +
+                        '<span class="custom-marker-text">' + displayName + '</span>' +
                       '</div>',
-                iconSize: [120, 28],
+                iconSize: [130, 28],
                 iconAnchor: [20, 14],
                 popupAnchor: [0, -14]
             });
@@ -480,9 +503,10 @@
                     '</a>' +
                 '</div>';
 
-            const marker = L.marker([spot.lat, spot.lng], { icon: customIcon })
-                .bindPopup(popupContent, { className: 'custom-popup' })
-                .addTo(map);
+            const marker = L.marker([spot.lat, spot.lng], { 
+                icon: customIcon,
+                zIndexOffset: isHotel ? 1000 : 0 // 讓飯店圖示優先顯現在最上層
+            }).bindPopup(popupContent, { className: 'custom-popup' }).addTo(map);
 
             markersMap[spot.id] = marker;
         });
@@ -580,7 +604,6 @@
         }
 
         function switchTab(tabKey) {
-            // 切換按鈕樣式
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('bg-indigo-600', 'text-white');
                 btn.classList.add('bg-slate-800', 'text-slate-300');
@@ -591,7 +614,6 @@
                 activeBtn.classList.add('bg-indigo-600', 'text-white');
             }
 
-            // 切換內容顯示
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.add('hidden');
             });
