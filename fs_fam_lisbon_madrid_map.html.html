@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>萱的 FS FAM 里斯本 &amp; 馬德里 · 雙城互動行程地圖</title>
+  <title>里斯本 &amp; 馬德里 · 雙城互動行程地圖</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <style>
@@ -56,15 +56,6 @@
       margin: 0;
       font-size: 13px;
       color: #d6deeb;
-    }
-    .alert-box {
-      margin-top: 12px;
-      background: rgba(184, 149, 82, 0.18);
-      border: 1px solid rgba(243, 215, 155, 0.5);
-      border-radius: 10px;
-      padding: 9px 11px;
-      font-size: 12px;
-      color: #fff4dc;
     }
     .container {
       max-width: 820px;
@@ -313,12 +304,9 @@
 
 <header>
   <div class="container" style="padding:0;">
-    <div class="badge">FOUR SEASONS FAM TOUR · 2026/11/23 – 11/30</div>
-    <h1>萱的 FS FAM 里斯本 &amp; 馬德里 · 雙城互動行程地圖</h1>
+    <div class="badge">LISBON &amp; MADRID · 2026/11/23 – 11/30</div>
+    <h1>里斯本 &amp; 馬德里 · 雙城互動行程地圖</h1>
     <p>Four Seasons Hotel Ritz Lisbon × Four Seasons Hotel Madrid</p>
-    <div class="alert-box">
-      ⚠️ <strong>時間核對提醒：</strong>航班表顯示 <strong>11/29 09:35</strong> 自馬德里起飛（建議約 06:30 需從飯店出發）；行程表另註記「12:00 個別退房與送機」，出發前請與主辦單位（Clivia）再次確認 11/29 早上送機時刻！
-    </div>
   </div>
 </header>
 
@@ -336,7 +324,7 @@
     <div class="map-wrap">
       <div id="map"></div>
       <div class="legend">
-        <span><i class="dot" style="background:#b89552;"></i>四季酒店</span>
+        <span><i class="dot" style="background:#b89552;"></i>下榻酒店</span>
         <span><i class="dot" style="background:#c45d3e;"></i>里斯本景點</span>
         <span><i class="dot" style="background:#1f4e78;"></i>馬德里/托萊多</span>
       </div>
@@ -346,7 +334,7 @@
   <!-- 每日行程與電子衣櫃 -->
   <div class="card">
     <div class="section-title">
-      <span>✦ 每日行程動線 &amp; 電子衣櫃</span>
+      <span>✦ 每日行程動線 &amp; 穿搭備忘</span>
       <span class="section-sub">點擊天數自動篩選地圖地標</span>
     </div>
 
@@ -384,10 +372,10 @@
     </div>
   </div>
 
-  <!-- 隨身打包與 Pocket 3 清點 -->
+  <!-- 隨身打包清點 -->
   <div class="card">
     <div class="section-title">
-      <span>🧳 隨身打包 &amp; Pocket 3 清點清單</span>
+      <span>🧳 隨身打包清點清單</span>
       <span class="section-sub">點擊打勾自動記憶於手機</span>
     </div>
     <div id="checklistContainer"></div>
@@ -397,21 +385,21 @@
 
 <script>
   const places = [
-    { id: 1, name: "里斯本麗思四季酒店 (Four Seasons Hotel Ritz Lisbon)", lat: 38.7267, lng: -9.1544, type: "hotel", region: "lisbon", days: ["D1","D2","D3"], note: "11/24–11/26 下榻酒店 · Varanda 餐廳迎賓晚宴與早餐" },
-    { id: 2, name: "Estrela 經典路面電車起點 (Basílica da Estrela)", lat: 38.7133, lng: -9.1606, type: "lisbon", region: "lisbon", days: ["D2"], note: "11/25 10:30 搭乘私人經典路面電車出發" },
-    { id: 3, name: "阿爾法瑪區 (Alfama 歷史街區徒步)", lat: 38.7116, lng: -9.1303, type: "lisbon", region: "lisbon", days: ["D2"], note: "11/25 11:00 歷史街區徒步導覽與在地美食試吃" },
-    { id: 4, name: "羅西烏廣場 & 自由大道 (Rossio Square)", lat: 38.7138, lng: -9.1394, type: "lisbon", region: "lisbon", days: ["D2"], note: "11/25 13:30 乘車欣賞市中心大道風光" },
-    { id: 5, name: "貝倫區 · 熱羅尼莫斯修道院 & 百年蛋塔", lat: 38.6979, lng: -9.2067, type: "lisbon", region: "lisbon", days: ["D2"], note: "11/25 14:00 參觀修道院外觀並品嚐正宗貝倫蛋塔" },
-    { id: 6, name: "洛雷托地下畫廊 & Patriarchal 水庫", lat: 38.7145, lng: -9.1449, type: "lisbon", region: "lisbon", days: ["D2"], note: "11/25 16:00 地下畫廊導覽＋私人法朵 (Fado) 音樂會" },
-    { id: 7, name: "Páteo at Bairro do Avillez 餐廳", lat: 38.7121, lng: -9.1415, type: "lisbon", region: "lisbon", days: ["D2"], note: "11/25 19:00 名廚餐廳晚餐" },
-    { id: 8, name: "馬德里四季酒店 (Four Seasons Hotel Madrid)", lat: 40.4173, lng: -3.7003, type: "hotel", region: "madrid", days: ["D3","D4","D5","D6"], note: "11/26–11/29 下榻酒店 · ISA 餐廳、Dani Brasserie、El Patio" },
-    { id: 9, name: "文學區 (Barrio de las Letras)", lat: 40.4143, lng: -3.6985, type: "madrid", region: "madrid", days: ["D4"], note: "11/27 10:30 馬德里徒步導覽起點" },
+    { id: 1, name: "里斯本麗思四季酒店 (Four Seasons Hotel Ritz Lisbon)", lat: 38.7267, lng: -9.1544, type: "hotel", region: "lisbon", days: ["D1","D2","D3"], note: "Varanda 餐廳迎賓晚宴與早餐" },
+    { id: 2, name: "Estrela 經典路面電車起點 (Basílica da Estrela)", lat: 38.7133, lng: -9.1606, type: "lisbon", region: "lisbon", days: ["D2"], note: "10:30 搭乘經典路面電車出發" },
+    { id: 3, name: "阿爾法瑪區 (Alfama 歷史街區徒步)", lat: 38.7116, lng: -9.1303, type: "lisbon", region: "lisbon", days: ["D2"], note: "11:00 歷史街區徒步導覽與在地美食試吃" },
+    { id: 4, name: "羅西烏廣場 & 自由大道 (Rossio Square)", lat: 38.7138, lng: -9.1394, type: "lisbon", region: "lisbon", days: ["D2"], note: "13:30 乘車欣賞市中心大道風光" },
+    { id: 5, name: "貝倫區 · 熱羅尼莫斯修道院 & 百年蛋塔", lat: 38.6979, lng: -9.2067, type: "lisbon", region: "lisbon", days: ["D2"], note: "14:00 參觀修道院外觀並品嚐正宗貝倫蛋塔" },
+    { id: 6, name: "洛雷托地下畫廊 & Patriarchal 水庫", lat: 38.7145, lng: -9.1449, type: "lisbon", region: "lisbon", days: ["D2"], note: "16:00 地下畫廊導覽＋私人法朵 (Fado) 音樂會" },
+    { id: 7, name: "Páteo at Bairro do Avillez 餐廳", lat: 38.7121, lng: -9.1415, type: "lisbon", region: "lisbon", days: ["D2"], note: "19:00 名廚餐廳晚餐" },
+    { id: 8, name: "馬德里四季酒店 (Four Seasons Hotel Madrid)", lat: 40.4173, lng: -3.7003, type: "hotel", region: "madrid", days: ["D3","D4","D5","D6"], note: "ISA 餐廳、Dani Brasserie、El Patio" },
+    { id: 9, name: "文學區 (Barrio de las Letras)", lat: 40.4143, lng: -3.6985, type: "madrid", region: "madrid", days: ["D4"], note: "10:30 馬德里徒步導覽起點" },
     { id: 10, name: "太陽門廣場 (Puerta del Sol)", lat: 40.4169, lng: -3.7035, type: "madrid", region: "madrid", days: ["D4"], note: "馬德里心臟地標與零公里起點" },
     { id: 11, name: "主廣場 (Plaza Mayor)", lat: 40.4155, lng: -3.7074, type: "madrid", region: "madrid", days: ["D4"], note: "百年歷史拱廊廣場" },
     { id: 12, name: "格蘭大道 (Gran Vía)", lat: 40.4200, lng: -3.7058, type: "madrid", region: "madrid", days: ["D4","D5"], note: "標誌性購物大道與晚間聖誕燈飾散步" },
-    { id: 13, name: "Galería Canalejas 精品廊", lat: 40.4171, lng: -3.7000, type: "madrid", region: "madrid", days: ["D4"], note: "11/27 15:30 精品購物與歷史建築遺產巡禮" },
-    { id: 14, name: "Mandarin Oriental Ritz, Madrid", lat: 40.4157, lng: -3.6928, type: "madrid", region: "madrid", days: ["D4"], note: "11/27 17:00–18:00 自行前往 MO 參觀（Clivia 安排）" },
-    { id: 15, name: "托萊多古城 (Toledo UNESCO 世界遺產)", lat: 39.8568, lng: -4.0245, type: "madrid", region: "toledo", days: ["D5"], note: "11/28 10:00–16:00 巴士一日遊 · 前西班牙帝國首都" }
+    { id: 13, name: "Galería Canalejas 精品廊", lat: 40.4171, lng: -3.7000, type: "madrid", region: "madrid", days: ["D4"], note: "15:30 精品購物與歷史建築遺產巡禮" },
+    { id: 14, name: "Mandarin Oriental Ritz, Madrid", lat: 40.4157, lng: -3.6928, type: "madrid", region: "madrid", days: ["D4"], note: "17:00–18:00 酒店參觀行程" },
+    { id: 15, name: "托萊多古城 (Toledo UNESCO 世界遺產)", lat: 39.8568, lng: -4.0245, type: "madrid", region: "toledo", days: ["D5"], note: "10:00–16:00 巴士一日遊 · 前西班牙帝國首都" }
   ];
 
   const daysData = [
@@ -428,7 +416,7 @@
       temp: "里斯本 11–17°C",
       wardrobe: "🧥 玫瑰衣 ＋ 白色大衣 ＋ 棉褲（或棕直條紋薄毛衣 ＋ 黑褲）",
       items: [
-        { time: "02:00 – 06:55", desc: "阿布達比轉乘 EY099 飛往里斯本，06:55 抵達（私人機場接送至酒店）", placeId: 1 },
+        { time: "02:00 – 06:55", desc: "阿布達比轉乘 EY099 飛往里斯本，06:55 抵達（專車接送至酒店）", placeId: 1 },
         { time: "全天自由活動", desc: "入住里斯本麗思四季酒店 (Four Seasons Hotel Ritz Lisbon) 休整", placeId: 1 },
         { time: "18:00", desc: "飯店參觀 Hotel Site Visit", placeId: 1 },
         { time: "19:00", desc: "Varanda 餐廳迎賓雞尾酒會與晚餐", placeId: 1 }
@@ -439,13 +427,13 @@
       temp: "里斯本 12–16°C",
       wardrobe: "👗 卡其拼色絨布裙 ＋ 米色發熱衣 ＋ 紅色大衣 ＋ 肉絲 ＋ 棕色腰帶",
       items: [
-        { time: "07:00 – 09:30", desc: "Varanda 餐廳享用早餐，09:30 展開全日私人導覽", placeId: 1 },
-        { time: "10:30 – 11:00", desc: "搭乘私人經典路面電車（由 Estrela 出發，行經歷史街區）", placeId: 2 },
+        { time: "07:00 – 09:30", desc: "Varanda 餐廳享用早餐，09:30 展開全日城市導覽", placeId: 1 },
+        { time: "10:30 – 11:00", desc: "搭乘經典路面電車（由 Estrela 出發，行經歷史街區）", placeId: 2 },
         { time: "11:00 – 13:30", desc: "阿爾法瑪區 (Alfama) 與市中心徒步導覽（含美食試吃）", placeId: 3 },
         { time: "13:30 – 14:00", desc: "乘車欣賞羅西烏廣場與自由大道風光", placeId: 4 },
         { time: "14:00 – 15:30", desc: "參觀貝倫區熱羅尼莫斯修道院外觀，品嚐正宗貝倫蛋塔", placeId: 5 },
         { time: "16:00 – 17:00", desc: "洛雷托地下畫廊與 Patriarchal 水庫導覽 ＋ 私人法朵 (Fado) 音樂會", placeId: 6 },
-        { time: "19:00", desc: "於 Páteo at Bairro do Avillez 享用晚餐，餐後接送回酒店", placeId: 7 }
+        { time: "19:00", desc: "於 Páteo at Bairro do Avillez 享用晚餐，餐後返回酒店", placeId: 7 }
       ]
     },
     {
@@ -460,14 +448,14 @@
       ]
     },
     {
-      code: "D4", date: "11/27 (五)", title: "🇪🇸 馬德里徒步 & MO 參觀",
+      code: "D4", date: "11/27 (五)", title: "🇪🇸 馬德里徒步 & 酒店參觀",
       temp: "馬德里 1–9°C（低溫保暖）",
       wardrobe: "🤍 日間：白色蝴蝶結毛衣 ＋ 發熱衣 ＋ 白色大衣 ＋ 黑厚寬褲｜🌙 晚宴：魚尾裙",
       items: [
         { time: "07:00 – 10:00", desc: "Dani Brasserie 餐廳享用早餐", placeId: 8 },
         { time: "10:30 – 13:30", desc: "馬德里徒步導覽：文學區 ➔ 太陽門廣場 ➔ 主廣場 ➔ 格蘭大道", placeId: 10 },
         { time: "15:30 – 16:00", desc: "步行前往 Galería Canalejas 體驗精品購物與建築遺產", placeId: 13 },
-        { time: "16:30 – 18:00", desc: "自由活動 ➔ 自行前往 Mandarin Oriental Ritz Madrid 參觀（Clivia 安排 17:00–18:00）", placeId: 14 },
+        { time: "16:30 – 18:00", desc: "自由活動 ➔ 17:00–18:00 前往 Mandarin Oriental Ritz Madrid 參觀", placeId: 14 },
         { time: "19:00", desc: "於 Dani Brasserie 享用馬略卡 (Mallorca) 主題晚宴", placeId: 8 }
       ]
     },
@@ -487,25 +475,24 @@
       temp: "馬德里 4–11°C",
       wardrobe: "❤️ 紅色毛衣 ＋ 白色大衣 ＋ 棉褲（長途飛行舒適保暖）",
       items: [
-        { time: "09:35 – 19:35", desc: "航班表：搭乘阿提哈德航空 EY102 自馬德里飛往阿布達比（請確認清晨送機時間）", placeId: 8 },
+        { time: "09:35 – 19:35", desc: "搭乘阿提哈德航空 EY102 自馬德里飛往阿布達比（請依主辦單位通知時間前往機場）", placeId: 8 },
         { time: "20:50", desc: "阿布達比轉乘 EY898 飛往台北（跨夜飛行）" }
       ]
     },
     {
       code: "D7", date: "11/30 (一)", title: "🇹🇼 平安抵達台北",
       temp: "台北 18–23°C",
-      wardrobe: "🏠 脫下大衣，歡迎回家！",
+      wardrobe: "🏠 返抵溫暖的家",
       items: [
-        { time: "09:00", desc: "順利抵達桃園國際機場，圓滿結束葡西四季 FAM 考察之旅" }
+        { time: "09:00", desc: "順利抵達桃園國際機場，圓滿結束葡西雙城之旅" }
       ]
     }
   ];
 
   const checklistData = [
-    { group: "🎥 DJI Osmo Pocket 3 清點", items: ["機身", "保護殼", "廣角鏡", "收納包", "迷你腳架", "電池手把", "延長手把", "麥克風", "防風罩(毛毛)", "充電線"] },
-    { group: "🛂 重要證件與禦寒", items: ["護照", "信用卡", "外幣(歐元)", "AirTag", "圍巾", "雨傘", "手持暖暖包(6個)", "羽絨背心", "藥品 / B群", "口罩"] },
-    { group: "🔌 電子產品", items: ["手機", "行動電源", "手機充電器", "AirPods", "眼鏡 / 眼鏡盒", "筆電", "筆電充電器", "滑鼠", "商務名片"] },
-    { group: "💄 化妝與保養", items: ["隱形眼鏡", "防曬/妝前乳", "粉底/遮瑕/粉餅", "眉眼彩妝與刷具", "唇膏/腮紅/修容", "香水/髮夾/飾品", "卸妝巾/洗面乳", "化妝水/面霜/面膜", "護唇膏/眼藥水/髮油"] }
+    { group: "🛂 重要證件與禦寒", items: ["護照", "信用卡", "外幣(歐元)", "圍巾", "雨傘", "暖暖包", "羽絨背心", "常備藥品", "口罩"] },
+    { group: "🔌 隨身電子與配件", items: ["手機", "行動電源", "充電器與轉接頭", "耳機", "眼鏡 / 太陽眼鏡", "商務名片"] },
+    { group: "💄 化妝與保養", items: ["隱形眼鏡", "防曬 / 妝前乳", "底妝與彩妝刷具", "唇膏 / 腮紅", "卸妝 / 洗面乳", "保濕面霜 / 面膜", "護唇膏 / 護手霜"] }
   ];
 
   // 初始化地圖（完全免費免 API Key 的 OpenStreetMap 底圖）
@@ -543,7 +530,6 @@
       visibleCoords.push([p.lat, p.lng]);
     });
 
-    // 畫出葡西移動虛線
     const routeLine = L.polyline([
       [38.7267, -9.1544],
       [40.4173, -3.7003],
@@ -594,7 +580,7 @@
         <span class="temp-badge">🌡️ ${d.temp}</span>
       </div>
       <div class="wardrobe-box">
-        <div class="wardrobe-title">👗 當日電子衣櫃穿搭</div>
+        <div class="wardrobe-title">👗 當日穿搭備忘</div>
         <div>${d.wardrobe}</div>
       </div>
       <ul class="timeline">
@@ -617,7 +603,6 @@
     }
   }
 
-  // 建立天數按鈕
   const scroller = document.getElementById('dayScroller');
   daysData.forEach((d, idx) => {
     const btn = document.createElement('button');
@@ -627,8 +612,7 @@
     scroller.appendChild(btn);
   });
 
-  // 建立打包清點清單（LocalStorage 記憶）
-  const savedChecks = JSON.parse(localStorage.getItem('fs_fam_checks_v1') || '{}');
+  const savedChecks = JSON.parse(localStorage.getItem('lisbon_madrid_checks_v1') || '{}');
   const chkContainer = document.getElementById('checklistContainer');
   checklistData.forEach((grp, gIdx) => {
     const div = document.createElement('div');
@@ -643,7 +627,7 @@
       label.innerHTML = `<input type="checkbox" ${isDone ? 'checked' : ''}> <span>${text}</span>`;
       label.querySelector('input').onchange = (e) => {
         savedChecks[key] = e.target.checked;
-        localStorage.setItem('fs_fam_checks_v1', JSON.stringify(savedChecks));
+        localStorage.setItem('lisbon_madrid_checks_v1', JSON.stringify(savedChecks));
         label.classList.toggle('done', e.target.checked);
       };
       itemsBox.appendChild(label);
@@ -651,7 +635,6 @@
     chkContainer.appendChild(div);
   });
 
-  // 預設顯示全部地標與 D1 行程
   selectDay(1);
   switchView('all', document.querySelector('.view-btn'));
 </script>
